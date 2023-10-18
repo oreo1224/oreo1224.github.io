@@ -1,29 +1,5 @@
-<div id="interactive" class="viewport"></div>
-<script type="text/javascript" src="https://serratus.github.io/quaggaJS/examples/js/quagga.min.js"></script>
-<script>
-Quagga.init({
-  inputStream: {
-    name: 'Live',
-    type: 'LiveStream',
-    target: document.querySelector('#interactive'),//埋め込んだdivのID
-  },
-  decoder: {
-    readers: ['code_128_reader']//decoderの種類
-  }
-}, (err) => {
-  if(err) {
-    console.log(err);
-    return
-  }
-  console.log("Initialization finished. Ready to start");
-  Quagga.start();
-})
-
-Quagga.onDetected(success => {
-  const code = success.codeResult.code;
-  if(code) {
-    alert(code);
-    Quagga.stop();
-  }
-})
-</script>
+form action="cgi-bin/example.cgi" method="post">
+  <p>検索したいキーワードを入力してください。</p>
+  <input type="search" name="search" placeholder="キーワードを入力">
+  <input type="submit" name="submit" value="検索">
+</form>
