@@ -1,5 +1,41 @@
-<form action="https://shopping.bookoff.co.jp/search/stock/used/keyword/" method="POST" target="_blank">
-<!--  <p>JANコードを入力</p> -->
-  <input type="text" maxlength="13" oninput="value = value.replace(/[^0-9]+/i,'');" name="search" placeholder="JANコードを入力"　autofocus />
-  <input type="submit" name="submit" > 
-</form>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>新しいタブを開く</title>
+</head>
+<body>
+    <input type="number" id="numberInput" placeholder="Aの数値を入力" maxlength="13">
+    <button onclick="openNewTab()">新しいタブで開く</button>
+
+    <script>
+        function openNewTab() {
+            // 入力ボックスの値を取得
+            var inputValue = document.getElementById("numberInput").value;
+
+            // URLを構築
+            var url = "https://shopping.bookoff.co.jp/search/stock/used/keyword/" + inputValue;
+
+            // 新しいタブでURLを開く
+            var newTab = window.open(url, "_blank");
+
+            // 入力ボックスをクリア
+            document.getElementById("numberInput").value = "";
+
+            // 新しいタブがロードされたときの処理
+            if (newTab) {
+                newTab.addEventListener("load", function() {
+                    // 新しいタブのロードが完了したら入力ボックスをクリア
+                    document.getElementById("numberInput").value = "";
+                });
+            }
+        }
+
+        // Enterキーを押したときにも新しいタブを開く
+        document.getElementById("numberInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                openNewTab();
+            }
+        });
+    </script>
+</body>
+</html>
