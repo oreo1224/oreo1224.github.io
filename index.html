@@ -1,8 +1,29 @@
-Welcome to oreo1224.github.io
-<head>
-<link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Zen+Dots&display=swap" rel="stylesheet">
-<meta name="google-site-verification" content="1bkxpU0g5TSWqDb_uxlL5xW287gbHKCLKLF7V8vzOyo" />
-<link rel="stylesheet" href="stylesheet.css">
-  <p>https://www.twitter.com/phy_oreo</p>
-</head>
+<div id="interactive" class="viewport"></div>
+<script type="text/javascript" src="https://serratus.github.io/quaggaJS/examples/js/quagga.min.js"></script>
+<script>
+Quagga.init({
+  inputStream: {
+    name: 'Live',
+    type: 'LiveStream',
+    target: document.querySelector('#interactive'),//埋め込んだdivのID
+  },
+  decoder: {
+    readers: ['code_128_reader']//decoderの種類
+  }
+}, (err) => {
+  if(err) {
+    console.log(err);
+    return
+  }
+  console.log("Initialization finished. Ready to start");
+  Quagga.start();
+})
+
+Quagga.onDetected(success => {
+  const code = success.codeResult.code;
+  if(code) {
+    alert(code);
+    Quagga.stop();
+  }
+})
+</script>
