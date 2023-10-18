@@ -43,12 +43,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         const price = priceElements[i].textContent.trim();
 
                         // "定" 以下の情報を省略
+                        const truncatedTitle = title.split("まんがタイム")[0];
                         const truncatedPrice = price.split("定")[0];
-                        const productInfo = `${title} - ${truncatedPrice}`;
+                        const productInfo = `${truncatedTitle} - ${truncatedPrice}`;
                         productInfos.push(productInfo);
                     }
 
                     return productInfos;
+                    
                 })
                 .catch((error) => {
                     console.error(error);
