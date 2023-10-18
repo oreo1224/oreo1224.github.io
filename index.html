@@ -1,41 +1,15 @@
 <!DOCTYPE html>
 <html>
+<link rel="stylesheet" type="text/css" href="style.css">
 <head>
-    <title>新しいタブを開く</title>
+    <title>Bookoff 商品検索</title>
 </head>
 <body>
-    <input autofocus type="number" id="numberInput" placeholder="JANコードを入力" maxlength="13">
-    <button onclick="openNewTab()">JANコードでBO参照</button>
-
-    <script>
-        function openNewTab() {
-            // 入力ボックスの値を取得
-            var inputValue = document.getElementById("numberInput").value;
-
-            // URLを構築
-            var url = "https://shopping.bookoff.co.jp/search/stock/used/keyword/" + inputValue;
-
-            // 新しいタブでURLを開く
-            var newTab = window.open(url, "_blank");
-
-            // 入力ボックスをクリア
-            document.getElementById("numberInput").value = "";
-
-            // 新しいタブがロードされたときの処理
-            if (newTab) {
-                newTab.addEventListener("load", function() {
-                    // 新しいタブのロードが完了したら入力ボックスをクリア
-                    document.getElementById("numberInput").value = "";
-                });
-            }
-        }
-
-        // Enterキーを押したときにも新しいタブを開く
-        document.getElementById("numberInput").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                openNewTab();
-            }
-        });
-    </script>
+    <h1>Bookoff 商品検索</h1>
+    <input autofocus type="text" id="searchInput" placeholder="Aの数値を入力">
+    <button id="searchButton">検索</button>
+    <div id="results"></div>
+    
+    <script src="main.js"></script>
 </body>
 </html>
