@@ -1,0 +1,290 @@
+
+	<script type="text/javascript">
+	var level = "0,400,800,1200,1600,2100,2600,3200,3700,4300,4900,5500,6100,6800,7500,8100,8800,9500,10200,10900,11700,12400,13200,13900,14700,15500,16300,17100,17900,18700,19600,20400,21200,22100,23000,23800,24700,25600,26500,27300,28300,29200,30100,31000,32000,32900,33800,34800,35800,36700,37600,38700,39600,40600,41600,42600,43600,44600,45600,46600,47600,48700,49700,50800,51700,52900,53800,55000,56000,57000,58100,59200,60300,61400,62400,63600,64600,65800,66800".split(",");
+
+	function main ()
+	{
+		var levelTo = document.getElementById("levelToNeedStation").checked;
+		
+		if ( levelTo )
+			getNeedExp ();
+		else
+			getLevel();
+	}
+	function getNeedExp ()
+	{
+		var now_level = document.getElementById("level").value;
+		var mark_level = document.getElementById("marklevel").value;
+		
+		//	到達レベルまでの必要経験値
+		var total_need_exp = 0;
+		for ( var i = 0; i < mark_level; i ++ )
+			total_need_exp += parseInt(level[i]);
+			
+		//	現在までに獲得した経験値
+		var total_exp = 0;
+		for ( var i = 0; i < now_level; i ++ )
+			total_exp += parseInt(level[i]);
+			
+		//	あと必要な経験値数
+		var exp = Math.ceil(total_need_exp - total_exp);
+		var new_station = Math.ceil(exp / 1500);
+		
+		//	出力
+		var out_html = "<h3>でんこが"+ mark_level +"レベルになるためには、</h3><h3>あと<b>"+ exp +"の経験値(新駅"+ new_station +"駅分)</b>が必要です</h3>"
+		document.getElementById("result").innerHTML = out_html;
+	}
+	
+	function getLevel ()
+	{
+		var now_level = parseInt(document.getElementById("level").value);
+		var new_stations = parseInt(document.getElementById("new_stations").value);
+		
+		if ( new_stations <= 0 || isNaN(new_stations) )
+			new_stations = 1;
+		
+		//	現在までに獲得した経験値
+		var total_exp = 0;
+		for ( var i = 0; i < now_level; i ++ )
+			total_exp += parseInt(level[i]);
+		
+		//	今回の遠征でもらえる経験値 + 現在の経験値
+		var new_exp = total_exp + ( new_stations * 1500 );
+		
+		//	到達レベルまでの必要経験値
+		var total_need_exp = 0;
+		var new_level = 0;
+		for ( var i = 0; i < level.length; i ++ )
+		{
+			if ( new_exp >= total_need_exp )
+				new_level = i;
+			total_need_exp += parseInt(level[i]);
+		}
+		
+		var next_html = "すると、</h3><h3>でんこが"+ new_level +"レベル("+ now_level +" -> "+ new_level +")になるぞい";
+		
+		if ( new_level - now_level == 0 && new_level + 1 <= level.length )
+		{
+			var before_exp = total_exp;
+			total_exp += parseInt(level[now_level]);
+			var new_station = Math.ceil((total_exp - before_exp) / 1500);
+			next_html = "しても、でんこのレベルは上がらないようじゃ。</h3><h3>でんこのレベルを1上げるには、あと"+ (new_station - new_stations) +"駅必要じゃ";
+		} else if ( new_level == level.length -1 )
+		{
+			next_html = "すると、でんこが最強になるぞい";
+		}
+		
+		//	出力
+		var out_html = "<h3>今回おぬしが"+ new_stations +"の新駅を獲得" + next_html + "</h3>";
+		document.getElementById("result").innerHTML = out_html;
+	}
+
+	
+	</script>
+	
+	<h1>でんこれべる</h1>
+	<p>駅メモでんこのレベルアップに必要な経験値や新駅を計算するツールです</p>
+	<p><b>新駅は1500exp(新駅1000exp+月間新駅500exp)として計算します。</b></p>
+	<fieldset>
+	<legend>設定</legend>
+	<p><b>でんこの今のレベル：</b>
+	<select id="level" style="width: 60px" onchange="main();">
+	<option value="1">1
+	</option><option value="2">2
+	</option><option value="3">3
+	</option><option value="4">4
+	</option><option value="5">5
+	</option><option value="6">6
+	</option><option value="7">7
+	</option><option value="8">8
+	</option><option value="9">9
+	</option><option value="10">10
+	</option><option value="11">11
+	</option><option value="12">12
+	</option><option value="13">13
+	</option><option value="14">14
+	</option><option value="15">15
+	</option><option value="16">16
+	</option><option value="17">17
+	</option><option value="18">18
+	</option><option value="19">19
+	</option><option value="20" selected="">20
+	</option><option value="21">21
+	</option><option value="22">22
+	</option><option value="23">23
+	</option><option value="24">24
+	</option><option value="25">25
+	</option><option value="26">26
+	</option><option value="27">27
+	</option><option value="28">28
+	</option><option value="29">29
+	</option><option value="30">30
+	</option><option value="31">31
+	</option><option value="32">32
+	</option><option value="33">33
+	</option><option value="34">34
+	</option><option value="35">35
+	</option><option value="36">36
+	</option><option value="37">37
+	</option><option value="38">38
+	</option><option value="39">39
+	</option><option value="40">40
+	</option><option value="41">41
+	</option><option value="42">42
+	</option><option value="43">43
+	</option><option value="44">44
+	</option><option value="45">45
+	</option><option value="46">46
+	</option><option value="47">47
+	</option><option value="48">48
+	</option><option value="49">49
+	</option><option value="50">50
+	</option><option value="51">51
+	</option><option value="52">52
+	</option><option value="53">53
+	</option><option value="54">54
+	</option><option value="55">55
+	</option><option value="56">56
+	</option><option value="57">57
+	</option><option value="58">58
+	</option><option value="59">59
+	</option><option value="60">60
+	</option><option value="61">61
+	</option><option value="62">62
+	</option><option value="63">63
+	</option><option value="64">64
+	</option><option value="65">65
+	</option><option value="66">66
+	</option><option value="67">67
+	</option><option value="68">68
+	</option><option value="69">69
+	</option><option value="70">70
+	</option><option value="71">71
+	</option><option value="72">72
+	</option><option value="73">73
+	</option><option value="74">74
+	</option><option value="75">75
+	</option><option value="76">76
+	</option><option value="77">77
+	</option><option value="78">78
+	</option><option value="79">79
+	</option></select>
+	<b>レベル</b>
+	</p>
+	
+	<input type="radio" name="nav" id="levelToNeedStation" checked="checked" onchange="main();">
+	<label for="levelToNeedStation">レベル-&gt;必要新駅数</label>
+
+	<input type="radio" name="nav" id="StationToNewLevel" onchange="main();">
+	<label for="StationToNewLevel">新駅数-&gt;レベル</label>
+	
+	<article class="content levelToNeedStation">
+		<p><b>目標到達レベル：</b>
+		<select id="marklevel" style="width: 60px" onchange="main();">
+		<option value="1">1
+		</option><option value="2">2
+		</option><option value="3">3
+		</option><option value="4">4
+		</option><option value="5">5
+		</option><option value="6">6
+		</option><option value="7">7
+		</option><option value="8">8
+		</option><option value="9">9
+		</option><option value="10">10
+		</option><option value="11">11
+		</option><option value="12">12
+		</option><option value="13">13
+		</option><option value="14">14
+		</option><option value="15">15
+		</option><option value="16">16
+		</option><option value="17">17
+		</option><option value="18">18
+		</option><option value="19">19
+		</option><option value="20">20
+		</option><option value="21">21
+		</option><option value="22">22
+		</option><option value="23">23
+		</option><option value="24">24
+		</option><option value="25">25
+		</option><option value="26">26
+		</option><option value="27">27
+		</option><option value="28">28
+		</option><option value="29">29
+		</option><option value="30">30
+		</option><option value="31">31
+		</option><option value="32">32
+		</option><option value="33">33
+		</option><option value="34">34
+		</option><option value="35">35
+		</option><option value="36">36
+		</option><option value="37">37
+		</option><option value="38">38
+		</option><option value="39">39
+		</option><option value="40">40
+		</option><option value="41">41
+		</option><option value="42">42
+		</option><option value="43">43
+		</option><option value="44">44
+		</option><option value="45">45
+		</option><option value="46">46
+		</option><option value="47">47
+		</option><option value="48">48
+		</option><option value="49">49
+		</option><option value="50" selected="">50
+		</option><option value="51">51
+		</option><option value="52">52
+		</option><option value="53">53
+		</option><option value="54">54
+		</option><option value="55">55
+		</option><option value="56">56
+		</option><option value="57">57
+		</option><option value="58">58
+		</option><option value="59">59
+		</option><option value="60">60
+		</option><option value="61">61
+		</option><option value="62">62
+		</option><option value="63">63
+		</option><option value="64">64
+		</option><option value="65">65
+		</option><option value="66">66
+		</option><option value="67">67
+		</option><option value="68">68
+		</option><option value="69">69
+		</option><option value="70">70
+		</option><option value="71">71
+		</option><option value="72">72
+		</option><option value="73">73
+		</option><option value="74">74
+		</option><option value="75">75
+		</option><option value="76">76
+		</option><option value="77">77
+		</option><option value="78">78
+		</option><option value="79">79
+		</option></select>
+		<b>レベル</b>
+		</p>
+		<p>
+		<input type="button" value="50レベまで" id="bt" onclick="document.getElementById('marklevel').value=50; main();">
+		<input type="button" value="80レベまで" id="bt" onclick="document.getElementById('marklevel').value=79; main();">
+		</p>
+	</article>
+	
+	<article class="content StationToNewLevel">
+		<p><b>獲得する新駅数：</b>
+		<input type="text" id="new_stations" value="1" style="width:80px" oninput="main();">
+		<b>駅</b>
+		</p>
+	</article>
+
+	</fieldset>
+	
+	<p></p><div id="result" style="background-color: #AAEEDD;
+	border-style:solid; border-width:1px;"><h3>でんこが50レベルになるためには、</h3><h3>あと<b>710200の経験値(新駅474駅分)</b>が必要です</h3></div>
+	
+	<div class="dev">
+	<p><iframe id="twitter-widget-0" scrolling="no" frameborder="0" allowtransparency="true" class="twitter-share-button twitter-share-button-rendered twitter-tweet-button" style="position: absolute; visibility: hidden; width: 0px; height: 0px;" allow="autoplay 'self'; fullscreen 'self'" data-ruffle-polyfilled="" title="Twitter Tweet Button" src="https://web.archive.org/web/20160719053914if_/https://platform.twitter.com/widgets/tweet_button.b41e99df00581dc95d7fdd63f3283511.en.html#dnt=true&amp;id=twitter-widget-0&amp;lang=en&amp;original_referer=https%3A%2F%2Fshrimp.ga%2Ftool%2Fekilev%2F&amp;size=l&amp;text=%E3%81%88%E3%81%8D%E3%82%8C%E3%81%B9%EF%BC%81&amp;time=1468906757584&amp;type=share&amp;url=http%3A%2F%2Fshrimp.ga%2Ftool%2Fekilev%2F" data-url="http://shrimp.ga/tool/ekilev/"></iframe></p>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+	</div>
+
+
+<script src="chrome-extension://gppongmhjkpfnbhagpmjfkannfbllamg/js/js.js"></script><iframe id="rufous-sandbox" scrolling="no" frameborder="0" allowtransparency="true" allowfullscreen="true" style="position: absolute; visibility: hidden; display: none; width: 0px; height: 0px; padding: 0px; border: none;" allow="autoplay 'self'; fullscreen 'self'" data-ruffle-polyfilled=""></iframe></body>
