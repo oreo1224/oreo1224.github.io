@@ -1,6 +1,6 @@
 
 	<script type="text/javascript">
-	var level = "0,400,800,1200,1600,2100,2600,3200,3700,4300,4900,5500,6100,6800,7500,8100,8800,9500,10200,10900,11700,12400,13200,13900,14700,15500,16300,17100,17900,18700,19600,20400,21200,22100,23000,23800,24700,25600,26500,27300,28300,29200,30100,31000,32000,32900,33800,34800,35800,36700,37600,38700,39600,40600,41600,42600,43600,44600,45600,46600,47600,48700,49700,50800,51700,52900,53800,55000,56000,57000,58100,59200,60300,61400,62400,63600,64600,65800,66800".split(",");
+	var level = "0,400,800,1200,1600,2100,2600,3200,3700,4300,4900,5500,6100,6800,7500,8100,8800,9500,10200,10900,11700,12400,13200,13900,14700,15500,16300,17100,17900,18700,19600,20400,21200,22100,23000,23800,24700,25600,26500,27300,28300,29200,30100,31000,32000,32900,33800,34800,35800,36700,37600,38700,39600,40600,41600,42600,43600,44600,45600,46600,47600,48700,49700,50800,51700,52900,53800,55000,56000,57000,58100,59200,60300,61400,62400,63600,64600,65800,66800,68000,262000,290000,322000,358000,397000,441000,489000,543000,603000,669000,743000,824000,915000,1016000,1128000,1252000,1389000,1542000,1712000,1900000".split(",");
 
 	function main ()
 	{
@@ -61,21 +61,21 @@
 			total_need_exp += parseInt(level[i]);
 		}
 		
-		var next_html = "すると、</h3><h3>でんこが"+ new_level +"レベル("+ now_level +" -> "+ new_level +")になるぞい";
+		var next_html = "すると、</h3><h3>でんこが"+ new_level +"レベル("+ now_level +" -> "+ new_level +")になります";
 		
 		if ( new_level - now_level == 0 && new_level + 1 <= level.length )
 		{
 			var before_exp = total_exp;
 			total_exp += parseInt(level[now_level]);
 			var new_station = Math.ceil((total_exp - before_exp) / 1500);
-			next_html = "しても、でんこのレベルは上がらないようじゃ。</h3><h3>でんこのレベルを1上げるには、あと"+ (new_station - new_stations) +"駅必要じゃ";
+			next_html = "しても、でんこのレベルは上がりません。</h3><h3>でんこのレベルを1上げるには、あと"+ (new_station - new_stations) +"駅必要です";
 		} else if ( new_level == level.length -1 )
 		{
 			next_html = "すると、でんこが最強になるぞい";
 		}
 		
 		//	出力
-		var out_html = "<h3>今回おぬしが"+ new_stations +"の新駅を獲得" + next_html + "</h3>";
+		var out_html = "<h3>今回あなたがが"+ new_stations +"の新駅を獲得" + next_html + "</h3>";
 		document.getElementById("result").innerHTML = out_html;
 	}
 
@@ -168,6 +168,26 @@
 	</option><option value="77">77
 	</option><option value="78">78
 	</option><option value="79">79
+	</option><option value="80">80
+	</option><option value="81">81
+	</option><option value="82">82
+	</option><option value="83">83
+	</option><option value="84">84
+	</option><option value="85">85
+	</option><option value="86">86
+	</option><option value="87">87
+	</option><option value="88">88
+	</option><option value="89">89
+	</option><option value="90">90
+	</option><option value="91">91
+	</option><option value="92">92
+	</option><option value="93">93
+	</option><option value="94">94
+	</option><option value="95">95
+	</option><option value="96">96
+	</option><option value="97">97
+	</option><option value="98">98
+	</option><option value="99">99
 	</option></select>
 	<b>レベル</b>
 	</p>
@@ -260,12 +280,35 @@
 		</option><option value="77">77
 		</option><option value="78">78
 		</option><option value="79">79
+		</option><option value="80">80
+		</option><option value="81">81
+		</option><option value="82">82
+		</option><option value="83">83
+		</option><option value="84">84
+		</option><option value="85">85
+		</option><option value="86">86
+		</option><option value="87">87
+		</option><option value="88">88
+		</option><option value="89">89
+		</option><option value="90">90
+		</option><option value="91">91
+		</option><option value="92">92
+		</option><option value="93">93
+		</option><option value="94">94
+		</option><option value="95">95
+		</option><option value="96">96
+		</option><option value="97">97
+		</option><option value="98">98
+		</option><option value="99">99
 		</option></select>
 		<b>レベル</b>
 		</p>
 		<p>
-		<input type="button" value="50レベまで" id="bt" onclick="document.getElementById('marklevel').value=50; main();">
+		<input type="button" value="50レベまで" id="bt" onclick="document.getElementById('marklevel').value=49; main();">
+		<input type="button" value="60レベまで" id="bt" onclick="document.getElementById('marklevel').value=59; main();">
+		<input type="button" value="70レベまで" id="bt" onclick="document.getElementById('marklevel').value=69; main();">
 		<input type="button" value="80レベまで" id="bt" onclick="document.getElementById('marklevel').value=79; main();">
+		<input type="button" value="100レベまで" id="bt" onclick="document.getElementById('marklevel').value=99; main();">
 		</p>
 	</article>
 	
