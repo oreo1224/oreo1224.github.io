@@ -4,7 +4,8 @@ const CACHE_NAME = "janbookoff";
 const urlsToCache = [
   "./",
   "index.html",
-  "main.js"
+  "main.js",
+  "manifest.json"
 ];
 
 self.addEventListener("install", (event) => {
