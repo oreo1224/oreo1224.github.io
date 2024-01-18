@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.1, maximum-scale=4,user-scalable=yes">
+<meta name="viewport" content="width=device-width">
 <link rel="icon" href="../kr/favicon.ico">
 <script>
     if ("ServiceWorker" in navigator) {
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function(stream){
       video.srcObject = stream;
       //0.5秒毎にスキャンする
-      setTimeout(Scan,1000,true);
+      setTimeout(Scan,50,true);
     }
   ).catch( //許可されなかった場合
     function(err){jan.value+=err+'\n';}
@@ -53,8 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
       w=video.videoWidth;
       h=video.videoHeight;
       //画面上の表示サイズ
-      prev.style.width=(w/2)+"px";
-      prev.style.height=(h/2)+"px";
+      prev.style.width=(screen.width)+"px";
+      prev.style.height=(h*screen.width/w)+"px";
       //内部のサイズ
       prev.setAttribute("width",w);
       prev.setAttribute("height",h);
