@@ -1,4 +1,3 @@
-import {searchBookoff} from main.js
 var DetectedCount=0,DetectedCode="";
 var video,tmp,tmp_ctx,jan,prev,prev_ctx,w,h,mw,mh,x1,y1;
 window.addEventListener('load',function(event){
