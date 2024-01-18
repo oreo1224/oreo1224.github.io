@@ -53,8 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
       w=video.videoWidth;
       h=video.videoHeight;
       //画面上の表示サイズ
-      prev.style.width=(screen.width*0.85)+"px";
-      prev.style.height=(h*screen.width*0.85/w)+"px";
+      prev.style.width=(screen.width)+"px";
+      prev.style.height=(h*screen.width/w)+"px";
       //内部のサイズ
       prev.setAttribute("width",w);
       prev.setAttribute("height",h);
@@ -63,10 +63,10 @@ document.addEventListener("DOMContentLoaded", function () {
       x1=(w-mw)/2;
       y1=(h-mh)/2;
     }
-    prev_ctx.drawImage(video,0,0,w,h);
+    prev_ctx.drawImage(video,-10,-10,w,h);
     prev_ctx.beginPath();
     prev_ctx.strokeStyle="rgb(255,0,0)";
-    prev_ctx.lineWidth=2;
+    prev_ctx.lineWidth=5;
     prev_ctx.rect(x1,y1,mw,mh);
     prev_ctx.stroke();
     tmp.setAttribute("width",mw);
