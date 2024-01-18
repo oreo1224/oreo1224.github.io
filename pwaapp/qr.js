@@ -1,4 +1,4 @@
-import Quagga from "./quagga.min.js";
+import "./quagga.min.js";
 
 var DetectedCount=0,DetectedCode="";
 var video,tmp,tmp_ctx,jan,prev,prev_ctx,w,h,mw,mh,x1,y1;
