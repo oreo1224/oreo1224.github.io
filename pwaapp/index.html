@@ -4,6 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width">
 <link rel="icon" href="../kr/favicon.ico">
+<link rel="manifest" href="manifest.json">
 <script>
     if ("ServiceWorker" in navigator) {
         navigator.serviceWorker.register("sw.js").then(registration => {
@@ -101,7 +102,9 @@ document.addEventListener("DOMContentLoaded", function () {
       DetectedCode=result.codeResult.code;
     }
     if(DetectedCount=3){
+      if(DetectedCode >= 9000000000000){
         searchBookoff();
+        }
     }
   });
   // 商品情報取得キューを管理するための配列
