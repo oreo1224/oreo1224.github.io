@@ -17,7 +17,7 @@
 <!-- quaggaJSの読み込み -->
 <script src="quagga.min.js"></script>
 <script>
-var DetectedCount = 0, DetectedCode = "";
+var DetectedCount = 0, DetectedCode = "", keyword = "";
 var video, tmp, tmp_ctx, jan, prev, prev_ctx, w, h, mw, mh, x1, y1;
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -93,15 +93,27 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     Quagga.onDetected(function (result) {
+        const code = result.codeResult.code;
+
+        if (keyword !== code) {
+            keyword = code;
+        } else {
+            return;
+        }
+
+        if (!keyword) {
+            return;
+        }
+
         //読み取り誤差が多いため、3回連続で同じ値だった場合に成功とする
-        if (DetectedCode == result.codeResult.code) {
+        if (DetectedCode == code) {
             DetectedCount++;
         } else {
             DetectedCount = 0;
-            DetectedCode = result.codeResult.code;
+            DetectedCode = code;
         }
         if (DetectedCount == 3) {
-            addCodeToTable(DetectedCode);
+            addCodeToTable(keyword);
         }
     });
 
