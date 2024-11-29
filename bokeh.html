@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レンズボケ量計算</title>
+</head>
+<body>
+    <h1>レンズのボケ量計算ツール</h1>
+    <form id="bokehForm">
+        <label for="sensorSize">センサーサイズ：</label>
+        <select id="sensorSize">
+            <option value="1">フルサイズ</option>
+            <option value="1.5">APS-C (1.5xクロップ)</option>
+            <option value="2">マイクロフォーサーズ (2xクロップ)</option>
+        </select><br><br>
+
+        <label for="focalLength">焦点距離 (mm)：</label>
+        <input type="number" id="focalLength" placeholder="例: 35"><br><br>
+
+        <label for="aperture">絞り値 (f)：</label>
+        <input type="number" step="0.1" id="aperture" placeholder="例: 1.8"><br><br>
+
+        <button type="button" onclick="calculateBokeh()">計算</button>
+    </form>
+
+    <h2>結果</h2>
+    <table border="1" cellpadding="10">
+        <thead>
+            <tr>
+                <th>センサーサイズ</th>
+                <th>焦点距離 (mm)</th>
+                <th>絞り値 (f)</th>
+                <th>相対絞り値</th>
+            </tr>
+        </thead>
+        <tbody id="resultTable">
+            <tr>
+                <td>例: フルサイズ</td>
+                <td>50</td>
+                <td>1.8</td>
+                <td>1.00 (基準)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        function calculateBokeh() {
+            const sensorCrop = parseFloat(document.getElementById("sensorSize").value);
+            const focalLength = parseFloat(document.getElementById("focalLength").value);
+            const aperture = parseFloat(document.getElementById("aperture").value);
+
+            if (isNaN(focalLength) || isNaN(aperture)) {
+                alert("焦点距離と絞り値を入力してください。");
+                return;
+            }
+
+            // 基準レンズ (50mm f/1.8, フルサイズ)
+            const referenceBlurDiameter = 50 / 1.8;
+
+            // 実際のレンズのボケ径
+            const actualBlurDiameter = (focalLength / aperture) / sensorCrop;
+
+            // 相対ボケ量計算
+            const relativeBokeh = (actualBlurDiameter / referenceBlurDiameter).toFixed(2);
+
+            // 表に追加
+            const table = document.getElementById("resultTable");
+            const newRow = table.insertRow(-1);
+
+            const sensorCell = newRow.insertCell(0);
+            const focalLengthCell = newRow.insertCell(1);
+            const apertureCell = newRow.insertCell(2);
+            const bokehCell = newRow.insertCell(3);
+
+            sensorCell.innerText = getSensorSizeText(sensorCrop);
+            focalLengthCell.innerText = focalLength;
+            apertureCell.innerText = aperture;
+            bokehCell.innerText = relativeBokeh;
+        }
+
+        function getSensorSizeText(sensorCrop) {
+            switch(sensorCrop) {
+                case 1: return "フルサイズ";
+                case 1.5: return "APS-C";
+                case 2: return "マイクロフォーサーズ";
+                default: return "不明";
+            }
+        }
+    </script>
+</body>
+</html>
