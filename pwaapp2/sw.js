@@ -1,10 +1,9 @@
 // Cache name
-const CACHE_NAME = "janbookoff";
+const CACHE_NAME = "yamada";
 // Cache targets
 const urlsToCache = [
   "./",
   "index.html",
-  "quagga.min.js",
   "manifest.json"
 ];
 

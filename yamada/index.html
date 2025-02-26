@@ -1,25 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>山田電機商品検索</title>
+<title>ヤマダデンキ 商品ページ照会</title>
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  display: block;
+  margin-top: 20px;
+  text-decoration: none;
+  color: #333;
+}
+
+/* スマートフォン対応のメディアクエリ */
+@media (max-width: 768px) {
+  .search-container {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}
+</style>
 </head>
 <body>
-  <h1>山田電機商品詳細へのリンク</h1>
-  <p>JANコードを入力してください:</p>
-  <input type="text" id="janCode" placeholder="JANコード (13桁)">
-  <button onclick="createLink()">リンク作成</button>
-  <a id="productLink" href="#" target="_blank">商品詳細ページ</a>
-
+  <h1>ヤマダデンキ 商品ページ照会</h1>
+  <div class="search-container">
+    <p>JANコードを入力してください:</p>
+    <input type="number" id="janCode" placeholder="JANコード (13桁)" maxlength="13">
+    <button onclick="jumplink()">商品ページを表示</button>
+  </div>
   <script>
-    function createLink() {
+    function jumplink() {
       const janCode = document.getElementById("janCode").value;
-      if (!janCode || !janCode.match(/^\d{13}$/)) {
-        alert("無効なJANコードです。13桁の数字を入力してください。");
-        return;
-      }
-      const searchUrl = `https://www.yamada-denkiweb.com/search/${janCode}/?category=all&searchbox=1`;
-      document.getElementById("productLink").href = searchUrl;
-      document.getElementById("productLink").textContent = "山田電機検索結果";
+      //Corrected URL construction
+      const url = "https://www.yamada-denkiweb.com/search/?q=" + janCode; //Using 'q' for query parameter
+      window.open(url); //Using window.open is generally preferred over just 'open'
+      document.getElementById("janCode").value = "";
     }
   </script>
 </body>

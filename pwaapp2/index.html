@@ -1,128 +1,87 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
+<title>ヤマダデンキ 商品ページ照会</title>
+<link rel="manifest" href="manifest.json">
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="viewport" content="width=device-width">
-<link rel="icon" href="../kr/favicon.ico">
-<link rel="manifest" href="manifest.json">
 <script>
-    if ("ServiceWorker" in navigator) {
-        navigator.serviceWorker.register("sw.js").then(registration => {
-            console.log("ServiceWorker registration successful.");
-        }).catch(err => {
-            console.log("ServiceWorker registration failed.");
-        });
-    }
-</script>
-<!-- quaggaJSの読み込み -->
-<script src="quagga.min.js"></script>
-<script>
-var DetectedCount=0,DetectedCode="";
-var video,tmp,tmp_ctx,jan,prev,prev_ctx,w,h,mw,mh,x1,y1;
-var keyword="";
-document.addEventListener("DOMContentLoaded", function () {
-  video=document.createElement('video');
-  video.setAttribute("autoplay","");
-  video.setAttribute("muted","");
-  video.setAttribute("playsinline","");
-  video.onloadedmetadata = function(e){video.play();};
-  prev=document.getElementById("preview");
-  prev_ctx=prev.getContext("2d", {willReadFrequently:true});
-  tmp = document.createElement('canvas');
-  tmp_ctx = tmp.getContext("2d", {willReadFrequently:true});
-  jan=document.getElementById("jan");
-
-  navigator.mediaDevices.getUserMedia(
-    {"audio":false,"video":{"facingMode":"environment","width":{"ideal":640},"height":{"ideal":480}}}
-  ).then(
-    function(stream){
-      video.srcObject = stream;
-      setTimeout(Scan,50,true);
-    }
-  ).catch(
-    function(err){jan.value+=err+'\n';}
-  );
-
-  function Scan(first){
-    if(first){
-      w=video.videoWidth;
-      h=video.videoHeight;
-      prev.style.width=(screen.width)+"px";
-      prev.style.height=(h*screen.width/w)+"px";
-      prev.setAttribute("width",w);
-      prev.setAttribute("height",h);
-      mw=w*0.5;
-      mh=w*0.2;
-      x1=(w-mw)/2;
-      y1=(h-mh)/2;
-    }
-    prev_ctx.drawImage(video,-10,-10,w,h);
-    prev_ctx.beginPath();
-    prev_ctx.strokeStyle="rgb(255,0,0)";
-    prev_ctx.lineWidth=5;
-    prev_ctx.rect(x1,y1,mw,mh);
-    prev_ctx.stroke();
-    tmp.setAttribute("width",mw);
-    tmp.setAttribute("height",mh);
-    tmp_ctx.drawImage(prev,x1,y1,mw,mh,0,0,mw,mh);
-
-    tmp.toBlob(function(blob){
-      let reader = new FileReader();
-      reader.onload=function(){
-        let config={
-          decoder: {
-            readers: ["ean_reader","ean_8_reader"],
-            multiple: false,
-          },
-          locator:{patchSize:"large",halfSample:false},
-          locate:false,
-          src:reader.result,
-        };
-        Quagga.decodeSingle(config,function(){});
-      }
-      reader.readAsDataURL(blob);
-    });
-    setTimeout(Scan,10,false);
+  if ("ServiceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").then(registration => {
+          console.log("ServiceWorker registration successful.");
+      }).catch(err => {
+          console.log("ServiceWorker registration failed.");
+      });
   }
-
-  Quagga.onDetected(function (result) {
-    if(DetectedCode==result.codeResult.code){
-      DetectedCount++;
-    }else{
-      DetectedCount=0;
-      DetectedCode=result.codeResult.code;
-    }
-    if(DetectedCount===3){
-       GenerateUrl();
-    }
-  });
-
-  const queue = [];
-
-  function GenerateUrl() {
-    const ItemUrl = `https://www.yamada-denkiweb.com/search/${keyword}/?category=all&searchbox=1`;
-    queue.push(ItemUrl);
-    if (queue.length > 0) {
-      const url = queue.shift();
-      window.location.href = url;
-    }
-  }
-
-  const keywordInput = document.createElement('input');
-  keywordInput.type = 'text';
-  keywordInput.id = 'keywordInput';
-  keywordInput.placeholder = 'キーワードを入力';
-  document.body.appendChild(keywordInput);
-
-  keywordInput.addEventListener('input', () => {
-    keyword = keywordInput.value;
-  });
-
-});
 </script>
-<canvas id="preview"></canvas>
-<textarea id="jan"></textarea>
+<style>
+body {
+  font-family: sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  display: block;
+  margin-top: 20px;
+  text-decoration: none;
+  color: #333;
+}
+
+/* スマートフォン対応のメディアクエリ */
+@media (max-width: 768px) {
+  .search-container {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+}
+</style>
 </head>
 <body>
+  <h1>ヤマダデンキ 商品ページ照会</h1>
+  <div class="search-container">
+    <p>JANコードを入力してください:</p>
+    <input type="number" id="janCode" placeholder="JANコード (13桁)" maxlength="13">
+    <button onclick="jumplink()">商品ページを表示</button>
+  </div>
+  <script>
+    function jumplink() {
+      const janCode = document.getElementById("janCode").value;
+      //Corrected URL construction
+      const url = "https://www.yamada-denkiweb.com/search/?q=" + janCode; //Using 'q' for query parameter
+      window.open(url); //Using window.open is generally preferred over just 'open'
+      document.getElementById("janCode").value = "";
+    }
+  </script>
 </body>
 </html>
