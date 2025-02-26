@@ -1,51 +1,26 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JANコード検索</title>
+<title>山田電機商品検索</title>
 </head>
 <body>
-    <h2>JANコード検索</h2>
-    <input type="text" id="janInput" placeholder="JANコードを入力">
-    <button onclick="searchProduct()">検索</button>
-    <p id="status"></p>
+  <h1>山田電機商品詳細へのリンク</h1>
+  <p>JANコードを入力してください:</p>
+  <input type="text" id="janCode" placeholder="JANコード (13桁)">
+  <button onclick="createLink()">リンク作成</button>
+  <a id="productLink" href="#" target="_blank">商品詳細ページ</a>
 
-    <script>
-        async function searchProduct() {
-            const janCode = document.getElementById("janInput").value.trim();
-            if (!janCode.match(/^\d{13}$/)) {
-                alert("正しいJANコード（13桁）を入力してください。");
-                return;
-            }
-
-            const searchUrl = `https://www.yamada-denkiweb.com/search/${janCode}/?category=all&searchbox=1`;
-            document.getElementById("status").innerText = "検索中…";
-
-            try {
-                // 検索結果ページのHTMLを取得
-                const response = await fetch(searchUrl, { mode: "cors" });
-                const text = await response.text();
-
-                // 仮のDOMとしてHTMLを解析
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, "text/html");
-
-                // 商品ページのリンクを探す（ヤマダウェブコムのHTML構造による）
-                const firstProduct = doc.querySelector(".productLink, .search-result-item a");
-                
-                if (firstProduct) {
-                    const productUrl = firstProduct.href.startsWith("http") ? firstProduct.href : `https://www.yamada-denkiweb.com${firstProduct.getAttribute("href")}`;
-                    document.getElementById("status").innerText = "リダイレクト中…";
-                    window.location.href = productUrl;
-                } else {
-                    document.getElementById("status").innerText = "商品が見つかりませんでした。";
-                }
-            } catch (error) {
-                console.error("検索エラー:", error);
-                document.getElementById("status").innerText = "エラーが発生しました。";
-            }
-        }
-    </script>
+  <script>
+    function createLink() {
+      const janCode = document.getElementById("janCode").value;
+      if (!janCode || !janCode.match(/^\d{13}$/)) {
+        alert("無効なJANコードです。13桁の数字を入力してください。");
+        return;
+      }
+      const searchUrl = `https://www.yamada-denkiweb.com/search/${janCode}/?category=all&searchbox=1`;
+      document.getElementById("productLink").href = searchUrl;
+      document.getElementById("productLink").textContent = "山田電機検索結果";
+    }
+  </script>
 </body>
 </html>
