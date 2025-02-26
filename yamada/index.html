@@ -24,7 +24,7 @@
 
             try {
                 // 検索結果ページのHTMLを取得
-                const response = await fetch(searchUrl, { mode: "no-cors" });
+                const response = await fetch(searchUrl, { mode: "cors" });
                 const text = await response.text();
 
                 // 仮のDOMとしてHTMLを解析
