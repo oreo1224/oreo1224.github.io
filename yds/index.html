@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>JANコード検索 - ヤマダ電機</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    input {
+      font-size: 1.5rem;
+      width: 100%;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+    #result {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+    }
+    a {
+      color: #1a0dab;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>JANコード検索</h1>
+  <input id="input" type="text" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
+  <div id="result"></div>
+
+  <script>
+    const apiKey = "AIzaSyC1a7pehqvvgiJcSu6duiGLqE9FOOfXuLU";
+    const cx = "20f6921baf1ba4dbb";
+
+    const input = document.getElementById("input");
+    const result = document.getElementById("result");
+
+    input.addEventListener("keypress", async (e) => {
+      if (e.key === "Enter") {
+        const value = input.value.trim();
+        if (!/^\d{13}$/.test(value)) {
+          result.innerHTML = "<p style='color:red;'>13桁の数字を入力してください。</p>";
+          return;
+        }
+
+        input.value = "";
+        result.textContent = "検索中...";
+
+        const query = `in:yamada-denkiweb.com ${value}`;
+        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.items && data.items.length > 0) {
+            const first = data.items[0];
+            result.innerHTML = `
+              <p><strong>検索結果:</strong></p>
+              <a href="${first.link}" target="_blank">${first.title}</a>
+            `;
+          } else {
+            result.innerHTML = "検索結果が見つかりませんでした。";
+          }
+        } catch (err) {
+          result.innerHTML = "エラーが発生しました。";
+          console.error(err);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
