@@ -22,10 +22,12 @@
       padding: 0.5rem 1rem;
       margin-top: 1rem;
       cursor: pointer;
+      width: 100%;
+      box-sizing: border-box;
     }
     table {
       width: 100%;
-      margin-top: 1rem; /* ボタンとの間隔を調整 */
+      margin-top: 1rem;
       border-collapse: collapse;
       font-size: 1rem;
     }
@@ -79,82 +81,3 @@
   <button id="clearButton">検索結果をクリア</button>
   
   <table id="resultsTable">
-    <thead>
-      <tr>
-        <th>JANコード</th>
-        <th>抽出値（10桁）</th>
-        <th>検索タイトル</th>
-      </tr>
-    </thead>
-    <tbody id="resultsBody">
-    </tbody>
-  </table>
-
-  <script>
-    const apiKey = "AIzaSyC1a7pehqvvgiJcSu6duiGLqE9FOOfXuLU";
-    const cx = "20f6921baf1ba4dbb";
-    const input = document.getElementById("input");
-    const resultsBody = document.getElementById("resultsBody");
-    
-    // ▼▼▼ ここから追加 ▼▼▼
-    const clearButton = document.getElementById("clearButton");
-
-    clearButton.addEventListener("click", () => {
-      // 結果表示部分のtbodyの中身を空にする
-      resultsBody.innerHTML = "";
-    });
-    // ▲▲▲ ここまで追加 ▲▲▲
-
-    input.addEventListener("keypress", async (e) => {
-      if (e.key === "Enter") {
-        const value = input.value.trim();
-        if (!/^\d{13}$/.test(value)) {
-          alert("13桁の数字を入力してください");
-          return;
-        }
-
-        const query = `in:yamada-denkiweb.com ${value}`;
-        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
-        input.value = "";
-
-        try {
-          const res = await fetch(url);
-          const data = await res.json();
-          if (data.items && data.items.length > 0) {
-            const first = data.items[0];
-            const link = first.link;
-            const title = first.title;
-
-            let extracted = null;
-            const match = link.match(/\.com\/(\d{9,10})\//);
-            if (match) {
-              extracted = match[1].padStart(10, '0');
-            } else {
-              extracted = "（未抽出）";
-            }
-
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td data-label="JANコード">${value}</td>
-              <td data-label="抽出値">${extracted}</td>
-              <td data-label="検索タイトル"><a href="${link}" target="_blank">${title}</a></td>
-            `;
-            resultsBody.prepend(row);
-          } else {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td data-label="JANコード">${value}</td>
-              <td data-label="抽出値">該当なし</td>
-              <td data-label="検索タイトル">検索結果なし</td>
-            `;
-            resultsBody.prepend(row);
-          }
-        } catch (err) {
-          console.error(err);
-          alert("エラーが発生しました。APIキーや接続を確認してください。");
-        }
-      }
-    });
-  </script>
-</body>
-</html>
