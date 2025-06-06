@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JANコード検索 - ヤマダ電機</title>
   <style>
     body {
@@ -11,11 +11,12 @@
       padding: 1rem;
       max-width: 800px;
     }
-    input {
+    input, button {
       font-size: 1.2rem;
       width: 100%;
       padding: 0.6rem;
       box-sizing: border-box;
+      margin-top: 0.5rem;
     }
     table {
       width: 100%;
@@ -68,7 +69,8 @@
 </head>
 <body>
   <h2>JANコード検索</h2>
-  <input id="input" type="number" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
+  <input id="input" type="text" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
+  <button id="clearBtn" type="button">検索結果をクリア</button>
   <table id="resultsTable">
     <thead>
       <tr>
@@ -77,8 +79,7 @@
         <th>検索タイトル</th>
       </tr>
     </thead>
-    <tbody id="resultsBody">
-    </tbody>
+    <tbody id="resultsBody"></tbody>
   </table>
 
   <script>
@@ -86,6 +87,7 @@
     const cx = "20f6921baf1ba4dbb";
     const input = document.getElementById("input");
     const resultsBody = document.getElementById("resultsBody");
+    const clearBtn = document.getElementById("clearBtn");
 
     input.addEventListener("keypress", async (e) => {
       if (e.key === "Enter") {
@@ -138,6 +140,10 @@
           alert("エラーが発生しました。APIキーや接続を確認してください。");
         }
       }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      resultsBody.innerHTML = "";
     });
   </script>
 </body>
