@@ -17,6 +17,7 @@
       padding: 0.6rem;
       box-sizing: border-box;
     }
+<<<<<<< HEAD
     button {
       font-size: 1rem;
       padding: 0.5rem 1rem;
@@ -28,6 +29,11 @@
     table {
       width: 100%;
       margin-top: 1rem;
+=======
+    table {
+      width: 100%;
+      margin-top: 1.5rem;
+>>>>>>> parent of 86b6ca5 (Update index.html)
       border-collapse: collapse;
       font-size: 1rem;
     }
@@ -76,8 +82,80 @@
 </head>
 <body>
   <h2>JANコード検索</h2>
-  <input id="input" type="text" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
-  
-  <button id="clearButton">検索結果をクリア</button>
-  
+  <input id="input" type="number" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
   <table id="resultsTable">
+<<<<<<< HEAD
+=======
+    <thead>
+      <tr>
+        <th>JANコード</th>
+        <th>商品CD</th>
+        <th>商品型番</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody">
+    </tbody>
+  </table>
+
+  <script>
+    const apiKey = "AIzaSyC1a7pehqvvgiJcSu6duiGLqE9FOOfXuLU";
+    const cx = "20f6921baf1ba4dbb";
+    const input = document.getElementById("input");
+    const resultsBody = document.getElementById("resultsBody");
+
+    input.addEventListener("keypress", async (e) => {
+      if (e.key === "Enter") {
+        const value = input.value.trim();
+        if (!/^\d{13}$/.test(value)) {
+          alert("13桁の数字を入力してください");
+          return;
+        }
+
+        const query = `in:yamada-denkiweb.com ${value}`;
+        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`;
+        input.value = "";
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.items && data.items.length > 0) {
+            const first = data.items[0];
+            const link = first.link;
+            const title = first.title;
+
+            // 10桁 or 9桁の数値部分を抽出
+            let extracted = null;
+            const match = link.match(/\.com\/(\d{9,10})\//);
+            if (match) {
+              extracted = match[1].padStart(10, '0');
+            } else {
+              extracted = "（未抽出）";
+            }
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+              <td data-label="JANコード">${value}</td>
+              <td data-label="抽出値">${extracted}</td>
+              <td data-label="検索タイトル"><a href="${link}" target="_blank">${title}</a></td>
+            `;
+            resultsBody.prepend(row);
+          } else {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td data-label="JANコード">${value}</td>
+              <td data-label="抽出値">該当なし</td>
+              <td data-label="検索タイトル">検索結果なし</td>
+            `;
+            resultsBody.prepend(row);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("エラーが発生しました。APIキーや接続を確認してください。");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
+>>>>>>> parent of 86b6ca5 (Update index.html)
