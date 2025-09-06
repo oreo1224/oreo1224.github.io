@@ -42,9 +42,9 @@
       display: none;
     }
     #qrcodeImg {
-      width: 50%; /* 横幅を半分に */
-      height: auto; /* アスペクト比維持 */
-      max-width: 200px; /* 上限を設定 */
+      width: 50%;
+      height: auto;
+      max-width: 200px;
       border: 1px solid #ddd;
       background: white;
     }
@@ -63,13 +63,13 @@
   <h1 style="font-size:1.5em; text-align:center">店舗・POS QRジェネレータ</h1>
 
   <form id="form" onsubmit="return false;">
-    <label for="tenpo">店舗番号（上段）</label>
+    <label for="tenpo">店舗番号</label>
     <input id="tenpo" type="number" inputmode="numeric" step="1" pattern="\d*" placeholder="例: 123" />
 
-    <label for="pos">POS番号（下段）</label>
+    <label for="pos">POS番号</label>
     <input id="pos" type="number" inputmode="numeric" step="1" pattern="\d*" placeholder="例: 456" />
 
-    <div style="margin-top:10px"><small>※ 両方とも数値のみ入力できます。</small></div>
+    <div style="margin-top:10px"><small>店舗POS共に0埋めは必要ありません</small></div>
 
     <div style="margin-top:16px; text-align:center">
       <button id="generateBtn" type="button" style="width:100%">QRコードを生成</button>
@@ -108,7 +108,7 @@
 
     function updateQR(){
       const payload = buildPayload();
-      payloadPreview.textContent = `QR内容: \"${payload}\"`;
+      payloadPreview.textContent = `\"${payload}\"`;
 
       const url = `https://api.qrserver.com/v1/create-qr-code/?size=${QR_SIZE}x${QR_SIZE}&data=${encodeURIComponent(payload)}`;
       qImg.src = url;
@@ -120,6 +120,24 @@
       $tenpo = tenpoInput.value;
       $pos = posInput.value;
       updateQR();
+    });
+
+    // クエリ文字列からパラメータを読み取り
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const params = new URLSearchParams(window.location.search);
+      const shopParam = params.get('shop');
+      const posParam = params.get('pos');
+      if(shopParam){
+        tenpoInput.value = shopParam;
+        $tenpo = shopParam;
+      }
+      if(posParam){
+        posInput.value = posParam;
+        $pos = posParam;
+      }
+      if(shopParam || posParam){
+        updateQR();
+      }
     });
   </script>
 </body>
