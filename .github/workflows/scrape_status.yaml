@@ -29,7 +29,9 @@ jobs:
           pip install requests beautifulsoup4
 
       - name: 🏃‍♀️ 運行状況スクレイピングとJSONファイル更新
+        # 実行前に train_count ディレクトリに移動してから、スクリプトを実行する
         run: |
+          cd train_count
           python fetch_status.py
 
       - name: 🔍 変更されたファイルを確認
