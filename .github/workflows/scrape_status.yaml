@@ -15,7 +15,7 @@ jobs:
       - name: ⬇️ リポジトリのチェックアウト
         uses: actions/checkout@v4
         with:
-          # PAT_TOKENまたはGITHUB_TOKENを使用（PAT推奨）
+          # PAT_TOKENまたはGITHUB_TOKENを使用
           token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Pythonのセットアップ
@@ -28,16 +28,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4
 
+      # --- ここからパスの修正 ---
       - name: 🏃‍♀️ 運行状況スクレイピングとJSONファイル更新
-        # 実行前に train_count ディレクトリに移動してから、スクリプトを実行する
+        # train_countディレクトリに移動し、そこからfetch_status.pyを実行
         run: |
           cd train_count
           python fetch_status.py
 
       - name: 🔍 変更されたファイルを確認
         id: git_status
+        # リポジトリのルートからの相対パスでファイルの状態を確認
         run: |
-          if git diff --exit-code --name-only data/train_status.json; then
+          if git diff --exit-code --name-only train_count/data/train_status.json; then
             echo "changes=false" >> $GITHUB_OUTPUT
           else
             echo "changes=true" >> $GITHUB_OUTPUT
@@ -48,6 +50,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git add data/train_status.json
+          # コミット対象を train_count/data/train_status.json に指定
+          git add train_count/data/train_status.json
           git commit -m "chore(status): 運行状況を更新 [skip ci]"
           git push
