@@ -1,17 +1,9 @@
-// --- JSONファイルパスの定義 ---
-const DATA_URL_WEEKDAY = "data/train_data_weekday.json"; // 平日用時刻表データ
-const DATA_URL_WEEKEND = "data/train_data_weekend.json"; // 土休日用時刻表データ
-const STATUS_URL = "data/train_status.json"; // 運行状況データ
+// --- 設定ファイルパスの定義 ---
+const CONFIG_URL = "data/config.json";
 
-const COUNT_LIMIT = 4; // 表示する電車の最大本数
-
-// === 運行情報関連の閾値 (秒) ===
-const THRESHOLD_GRAY = 6 * 60; // 6分 (360秒) 未満でグレーアウト
-const THRESHOLD_RED = 7 * 60; // 7分 (420秒) 未満で赤色
-const THRESHOLD_YELLOW = 10 * 60; // 10分 (600秒) 未満で黄色
-
-let trainsData = []; // 元データ（5本目以降も含む）を格納
-let displayTrains = []; // 実際に表示する4本のデータを格納
+let config = {};
+let trainsData = [];
+let displayTrains = [];
 
 /**
  * 現在の曜日が土曜日または日曜日かを判定する
@@ -20,7 +12,6 @@ let displayTrains = []; // 実際に表示する4本のデータを格納
 function isWeekend() {
   const today = new Date();
   const day = today.getDay(); // 0:日, 1:月, ..., 6:土
-  // 2025/11/30 (現在時刻) は日曜日(0)なので、この実行時点では true
   return day === 0 || day === 6;
 }
 
@@ -38,7 +29,6 @@ function formatTime(totalSeconds) {
 
 /**
  * 'HH:MM'形式の時刻文字列を、今日のその時刻のDateオブジェクトに変換
- * 時刻が過去の場合は翌日と見なすロジックを含む。
  * @param {string} timeStr - 'HH:MM'形式の時刻
  * @returns {Date} その時刻のDateオブジェクト
  */
@@ -54,9 +44,7 @@ function parseDepartureTime(timeStr) {
     0
   );
 
-  // 現在時刻より過去の発車時刻（ただし、許容誤差として1分は過去までOKとする）
   if (departure.getTime() < now.getTime() - 60 * 1000) {
-    // 時刻が過去なら、それは日付を跨いだ翌日の時刻とみなす
     departure.setDate(departure.getDate() + 1);
   }
 
@@ -67,13 +55,14 @@ function parseDepartureTime(timeStr) {
  * 運行情報を取得し、表示を更新する関数
  */
 async function fetchAndRenderStatus() {
+  const STATUS_URL =
+    config.data_paths.data_root + config.data_paths.status_file;
+
   try {
-    // キャッシュ対策としてランダムなクエリパラメータを追加
     const response = await fetch(STATUS_URL + "?t=" + Date.now());
     const statusData = await response.json();
     const status = statusData.status;
 
-    // 運行情報の表示
     const alertElement = document.getElementById("alert-message");
     if (status.is_normal) {
       alertElement.textContent = "（平常運転）";
@@ -90,49 +79,51 @@ async function fetchAndRenderStatus() {
 }
 
 /**
- * データの取得と初期化（時刻表データのみ）
+ * データの取得と初期化（時刻表データと設定）
  */
 async function initializeData() {
-  // 曜日によって読み込む時刻表JSONファイルを決定
-  const targetUrl = isWeekend() ? DATA_URL_WEEKEND : DATA_URL_WEEKDAY;
-
   try {
-    const response = await fetch(targetUrl); // 時刻表はキャッシュされても問題なし
-    const data = await response.json();
+    // 1. 設定ファイルの読み込み
+    const configResponse = await fetch(CONFIG_URL);
+    config = await configResponse.json();
+
+    // 2. タイトルの設定
+    document.querySelector(
+      "h1"
+    ).innerHTML = `${config.station_info.line_name} ${config.station_info.station_name} ${config.station_info.direction_name} 発車案内 <span id="alert-message"></span>`;
+
+    // 3. 時刻表ファイルのパス決定
+    const timetableFile = isWeekend()
+      ? config.data_paths.weekend_data
+      : config.data_paths.weekday_data;
+    const targetUrl = config.data_paths.data_root + timetableFile;
+
+    // 4. 時刻表データの読み込み
+    const dataResponse = await fetch(targetUrl);
+    const data = await dataResponse.json();
 
     trainsData = data.trains;
 
-    // 元データ（trainsData）から、すでに発車済みの電車をフィルタリング
+    // 5. 表示データの準備
     const now = new Date();
     const futureTrains = trainsData.filter((train) => {
       const depTime = parseDepartureTime(train.departure_time);
       return depTime.getTime() > now.getTime();
     });
 
-    // 表示用のデータセットを作成
-    displayTrains = futureTrains.slice(0, COUNT_LIMIT);
+    displayTrains = futureTrains.slice(0, config.display_settings.count_limit);
 
-    // 初回描画
+    // 6. 描画開始とタイマー設定
     renderTrainList();
-
-    // 運行状況をまず読み込む
     fetchAndRenderStatus();
 
-    // カウントダウンを開始
     setInterval(updateCountdown, 1000);
-
-    // 運行状況を30秒ごとに更新 (GitHub Actionsが3分ごとにファイルを更新するため、頻繁にチェック)
-    setInterval(fetchAndRenderStatus, 30000);
+    setInterval(fetchAndRenderStatus, 30000); // 運行状況は30秒ごとに更新チェック
   } catch (error) {
-    console.error(
-      `時刻表データの取得または解析に失敗しました (${targetUrl}):`,
-      error
-    );
-    document.getElementById(
-      "countdown-list"
-    ).innerHTML = `<p style="color:red; font-weight:bold;">時刻表データ（${
-      isWeekend() ? "土休日" : "平日"
-    }）の読み込みに失敗しました。ファイルパスと形式を確認してください。</p>`;
+    console.error(`初期データの読み込みに失敗しました:`, error);
+    document.getElementById("countdown-list").innerHTML =
+      `<p style="color:red; font-weight:bold;">初期設定または時刻表データの読み込みに失敗しました。` +
+      `config.jsonや時刻表ファイルのパスと形式を確認してください。</p>`;
   }
 }
 
@@ -141,7 +132,7 @@ async function initializeData() {
  */
 function renderTrainList() {
   const listElement = document.getElementById("countdown-list");
-  listElement.innerHTML = ""; // リストをクリア
+  listElement.innerHTML = "";
 
   if (displayTrains.length === 0) {
     listElement.innerHTML = "<p>現在、表示可能な電車情報はありません。</p>";
@@ -156,7 +147,7 @@ function renderTrainList() {
 
     const row = document.createElement("div");
     row.className = "train-row";
-    row.dataset.departure = train.departure_time; // 発車時刻を保存
+    row.dataset.departure = train.departure_time;
 
     row.innerHTML = `
             <div class="train-details">
@@ -174,26 +165,29 @@ function renderTrainList() {
  * 1秒ごとのカウントダウン更新処理
  */
 function updateCountdown() {
+  if (!config.display_settings) return; // 設定未ロードの場合は処理しない
+
+  // 設定から閾値を取得し、秒に変換
+  const THRESHOLD_GRAY = config.display_settings.threshold_gray_min * 60;
+  const THRESHOLD_RED = config.display_settings.threshold_red_min * 60;
+  const THRESHOLD_YELLOW = config.display_settings.threshold_yellow_min * 60;
+
   const now = new Date();
   const listElement = document.getElementById("countdown-list");
   const rows = listElement.querySelectorAll(".train-row");
 
   let shouldReRender = false;
 
-  // 逆順に処理することで、削除時にインデックスがずれるのを防ぐ
   for (let i = rows.length - 1; i >= 0; i--) {
     const row = rows[i];
     const departureStr = row.dataset.departure;
 
-    // 発車済みで表示リストに残っている電車は無視（次の再描画で消える）
     if (
       displayTrains.findIndex((t) => t.departure_time === departureStr) === -1
     )
       continue;
 
     const departureTime = parseDepartureTime(departureStr);
-
-    // 現在時刻と発車時刻の差分（ミリ秒 -> 秒）
     const remainingMs = departureTime.getTime() - now.getTime();
     const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
 
@@ -201,8 +195,8 @@ function updateCountdown() {
     display.textContent = formatTime(remainingSec);
 
     // --- 色の変化とグレーアウト ---
-    display.className = "countdown-display"; // クラスをリセット
-    row.className = "train-row"; // クラスをリセット
+    display.className = "countdown-display";
+    row.className = "train-row";
 
     if (remainingSec < THRESHOLD_GRAY) {
       row.classList.add("grayed-out");
@@ -216,7 +210,6 @@ function updateCountdown() {
 
     // --- 0分になったら行を削除とデータ更新フラグをセット ---
     if (remainingSec <= 0) {
-      // displayTrainsから発車済みの電車を削除
       const departureIndex = displayTrains.findIndex(
         (t) => t.departure_time === departureStr
       );
@@ -229,16 +222,17 @@ function updateCountdown() {
 
   // 発車があった場合、次の電車を繰り上げて表示リストに追加し、全体を再描画
   if (shouldReRender) {
-    // 元データ (trainsData) から、現在表示中の電車に含まれていない次の電車を見つける
     const nextTrain = trainsData.find(
       (t) => !displayTrains.some((dt) => dt.departure_time === t.departure_time)
     );
 
-    if (nextTrain && displayTrains.length < COUNT_LIMIT) {
+    if (
+      nextTrain &&
+      displayTrains.length < config.display_settings.count_limit
+    ) {
       displayTrains.push(nextTrain);
     }
 
-    // リスト全体を再描画することで、行の削除と追加（繰り上げ）をスムーズに処理
     renderTrainList();
   }
 }
