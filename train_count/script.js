@@ -63,9 +63,10 @@ function parseDepartureTime(timeStr) {
 async function fetchAndRenderStatus() {
   const STATUS_URL =
     config.data_paths.data_root + config.data_paths.status_file;
+  const cacheBusterUrl = STATUS_URL + "?t=" + Date.now(); // 常にユニークなURLを生成
 
   try {
-    const response = await fetch(STATUS_URL + "?t=" + Date.now());
+    const response = await fetch(cacheBusterUrl, { cache: "no-store" }); // 強力にキャッシュを無効化
     const statusData = await response.json();
     const status = statusData.status;
     const timestamp = statusData.timestamp || "時刻情報なし"; // JSONの更新時刻を取得

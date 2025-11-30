@@ -11,6 +11,10 @@ jobs:
   scrape_and_update:
     runs-on: ubuntu-latest
 
+    # 🔥 タイムゾーンを日本時間 (Asia/Tokyo) に設定 🔥
+    env:
+      TZ: Asia/Tokyo
+
     steps:
       - name: ⬇️ リポジトリのチェックアウト
         uses: actions/checkout@v4
