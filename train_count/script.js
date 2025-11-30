@@ -5,6 +5,9 @@ let config = {};
 let trainsData = [];
 let displayTrains = [];
 
+// ... (isWeekend, formatTime, parseDepartureTime 関数は変更なし) ...
+// isWeekend, formatTime, parseDepartureTime 関数は省略
+
 /**
  * 現在の曜日が土曜日または日曜日かを判定する
  * @returns {boolean} 土休日の場合はtrue
@@ -51,6 +54,9 @@ function parseDepartureTime(timeStr) {
   return departure;
 }
 
+// -------------------------------------------------------------------
+// 🔥 運行状況の表示を修正 🔥
+// -------------------------------------------------------------------
 /**
  * 運行情報を取得し、表示を更新する関数
  */
@@ -62,8 +68,12 @@ async function fetchAndRenderStatus() {
     const response = await fetch(STATUS_URL + "?t=" + Date.now());
     const statusData = await response.json();
     const status = statusData.status;
+    const timestamp = statusData.timestamp || "時刻情報なし"; // JSONの更新時刻を取得
 
     const alertElement = document.getElementById("alert-message");
+    const timeElement = document.getElementById("status-time");
+
+    // 運行情報のメッセージ表示
     if (status.is_normal) {
       alertElement.textContent = "（平常運転）";
       alertElement.style.color = "green";
@@ -72,6 +82,23 @@ async function fetchAndRenderStatus() {
       alertElement.textContent = `🚨 ${status.message || "運行情報に注意"}`;
       alertElement.style.color = "red";
       alertElement.style.backgroundColor = "#f8d7da";
+    }
+
+    // 取得時刻の表示を更新
+    if (timeElement) {
+      timeElement.textContent = `(${timestamp} 取得)`;
+    } else {
+      // 初回実行時などで要素がまだ存在しない場合は、alertElementの後に追加
+      const newTimeElement = document.createElement("span");
+      newTimeElement.id = "status-time";
+      newTimeElement.style.fontSize = "0.7em";
+      newTimeElement.style.marginLeft = "10px";
+      newTimeElement.style.color = "#6c757d";
+      newTimeElement.textContent = `(${timestamp} 取得)`;
+      alertElement.parentNode.insertBefore(
+        newTimeElement,
+        alertElement.nextSibling
+      );
     }
   } catch (error) {
     console.error("運行情報の取得に失敗しました:", error);
@@ -87,10 +114,11 @@ async function initializeData() {
     const configResponse = await fetch(CONFIG_URL);
     config = await configResponse.json();
 
-    // 2. タイトルの設定
+    // 2. タイトルの設定 (曜日情報を追加)
+    const dayType = isWeekend() ? "（土休日）" : "（平日）";
     document.querySelector(
       "h1"
-    ).innerHTML = `${config.station_info.line_name} ${config.station_info.station_name} ${config.station_info.direction_name} 発車案内 <span id="alert-message"></span>`;
+    ).innerHTML = `${config.station_info.line_name} ${config.station_info.station_name} ${config.station_info.direction_name} ${dayType} 発車案内 <span id="alert-message"></span>`;
 
     // 3. 時刻表ファイルのパス決定
     const timetableFile = isWeekend()
@@ -118,7 +146,7 @@ async function initializeData() {
     fetchAndRenderStatus();
 
     setInterval(updateCountdown, 1000);
-    setInterval(fetchAndRenderStatus, 30000); // 運行状況は30秒ごとに更新チェック
+    setInterval(fetchAndRenderStatus, 30000);
   } catch (error) {
     console.error(`初期データの読み込みに失敗しました:`, error);
     document.getElementById("countdown-list").innerHTML =
@@ -126,7 +154,6 @@ async function initializeData() {
       `config.jsonや時刻表ファイルのパスと形式を確認してください。</p>`;
   }
 }
-
 /**
  * 電車リスト全体を描画する
  */
