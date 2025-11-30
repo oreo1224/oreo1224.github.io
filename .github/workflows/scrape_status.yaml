@@ -1,0 +1,51 @@
+name: 🚨 定期運行状況チェック
+
+on:
+  # 3分ごとに実行
+  schedule:
+    - cron: "*/3 * * * *"
+  # 手動実行を許可
+  workflow_dispatch:
+
+jobs:
+  scrape_and_update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ リポジトリのチェックアウト
+        uses: actions/checkout@v4
+        with:
+          # PAT_TOKENまたはGITHUB_TOKENを使用（PAT推奨）
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Pythonのセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: ⚙️ 依存ライブラリのインストール (requests, bs4)
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4
+
+      - name: 🏃‍♀️ 運行状況スクレイピングとJSONファイル更新
+        run: |
+          python fetch_status.py
+
+      - name: 🔍 変更されたファイルを確認
+        id: git_status
+        run: |
+          if git diff --exit-code --name-only data/train_status.json; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 💾 変更をコミットし、プッシュ
+        if: steps.git_status.outputs.changes == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add data/train_status.json
+          git commit -m "chore(status): 運行状況を更新 [skip ci]"
+          git push

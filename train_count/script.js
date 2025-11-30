@@ -1,6 +1,7 @@
 // --- JSONファイルパスの定義 ---
 const DATA_URL_WEEKDAY = "data/train_data_weekday.json"; // 平日用時刻表データ
 const DATA_URL_WEEKEND = "data/train_data_weekend.json"; // 土休日用時刻表データ
+const STATUS_URL = "data/train_status.json"; // 運行状況データ
 
 const COUNT_LIMIT = 4; // 表示する電車の最大本数
 
@@ -19,7 +20,8 @@ let displayTrains = []; // 実際に表示する4本のデータを格納
 function isWeekend() {
   const today = new Date();
   const day = today.getDay(); // 0:日, 1:月, ..., 6:土
-  return day === 0 || day === 6; // 日曜日(0)または土曜日(6)
+  // 2025/11/30 (現在時刻) は日曜日(0)なので、この実行時点では true
+  return day === 0 || day === 6;
 }
 
 /**
@@ -62,32 +64,43 @@ function parseDepartureTime(timeStr) {
 }
 
 /**
- * データの取得と初期化
+ * 運行情報を取得し、表示を更新する関数
  */
-async function initializeData() {
-  // 曜日によって読み込むJSONファイルを決定
-  const targetUrl = isWeekend() ? DATA_URL_WEEKEND : DATA_URL_WEEKDAY;
-
+async function fetchAndRenderStatus() {
   try {
-    // キャッシュを防ぐためタイムスタンプを追加
-    const response = await fetch(targetUrl + "?t=" + Date.now());
-    const data = await response.json();
-
-    trainsData = data.trains;
+    // キャッシュ対策としてランダムなクエリパラメータを追加
+    const response = await fetch(STATUS_URL + "?t=" + Date.now());
+    const statusData = await response.json();
+    const status = statusData.status;
 
     // 運行情報の表示
     const alertElement = document.getElementById("alert-message");
-    if (data.status.is_normal) {
+    if (status.is_normal) {
       alertElement.textContent = "（平常運転）";
       alertElement.style.color = "green";
       alertElement.style.backgroundColor = "#d4edda";
     } else {
-      alertElement.textContent = `🚨 ${
-        data.status.message || "運行情報に注意"
-      }`;
+      alertElement.textContent = `🚨 ${status.message || "運行情報に注意"}`;
       alertElement.style.color = "red";
       alertElement.style.backgroundColor = "#f8d7da";
     }
+  } catch (error) {
+    console.error("運行情報の取得に失敗しました:", error);
+  }
+}
+
+/**
+ * データの取得と初期化（時刻表データのみ）
+ */
+async function initializeData() {
+  // 曜日によって読み込む時刻表JSONファイルを決定
+  const targetUrl = isWeekend() ? DATA_URL_WEEKEND : DATA_URL_WEEKDAY;
+
+  try {
+    const response = await fetch(targetUrl); // 時刻表はキャッシュされても問題なし
+    const data = await response.json();
+
+    trainsData = data.trains;
 
     // 元データ（trainsData）から、すでに発車済みの電車をフィルタリング
     const now = new Date();
@@ -99,11 +112,17 @@ async function initializeData() {
     // 表示用のデータセットを作成
     displayTrains = futureTrains.slice(0, COUNT_LIMIT);
 
-    // 最初の描画
+    // 初回描画
     renderTrainList();
+
+    // 運行状況をまず読み込む
+    fetchAndRenderStatus();
 
     // カウントダウンを開始
     setInterval(updateCountdown, 1000);
+
+    // 運行状況を30秒ごとに更新 (GitHub Actionsが3分ごとにファイルを更新するため、頻繁にチェック)
+    setInterval(fetchAndRenderStatus, 30000);
   } catch (error) {
     console.error(
       `時刻表データの取得または解析に失敗しました (${targetUrl}):`,
@@ -111,10 +130,9 @@ async function initializeData() {
     );
     document.getElementById(
       "countdown-list"
-    ).innerHTML = `<p style="color:red; font-weight:bold;">時刻表データの読み込みに失敗しました。ファイルパスと形式を確認してください。</p>
-             <p>現在、${
-               isWeekend() ? "土休日" : "平日"
-             }用ファイルを参照しています。</p>`;
+    ).innerHTML = `<p style="color:red; font-weight:bold;">時刻表データ（${
+      isWeekend() ? "土休日" : "平日"
+    }）の読み込みに失敗しました。ファイルパスと形式を確認してください。</p>`;
   }
 }
 
