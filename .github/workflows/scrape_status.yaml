@@ -3,7 +3,7 @@ name: 🚨 定期運行状況チェック
 on:
   # 3分ごとに実行
   schedule:
-    - cron: "*/3 * * * *"
+    - cron: "*/15 * * * *"
   # 手動実行を許可
   workflow_dispatch:
 
