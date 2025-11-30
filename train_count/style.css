@@ -1,0 +1,79 @@
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #e9ecef;
+  color: #343a40;
+  margin: 20px;
+}
+
+header {
+  margin-bottom: 25px;
+  border-bottom: 2px solid #adb5bd;
+  padding-bottom: 10px;
+}
+
+h1 {
+  font-size: 1.8em;
+  color: #495057;
+}
+
+#alert-message {
+  font-size: 0.8em;
+  font-weight: bold;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  background-color: #f8d7da; /* Default background for red alert */
+}
+
+/* 電車ごとの行のスタイル */
+.train-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background-color: #ffffff;
+  transition: background-color 0.5s, opacity 0.5s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.train-details {
+  font-size: 1.1em;
+}
+
+/* グレーアウト (6分未満) */
+.grayed-out {
+  background-color: #dee2e6 !important;
+  opacity: 0.6;
+}
+
+/* カウントダウン表示のスタイル */
+.countdown-display {
+  font-size: 2.2em;
+  font-weight: 900;
+  width: 150px; /* 幅を固定して表示揺れを防ぐ */
+  text-align: right;
+  transition: color 0.5s;
+}
+
+/* 色の変化（JavaScriptでクラスを付与） */
+/* 緑: 10分以上（初期値）*/
+.color-green {
+  color: #28a745;
+}
+/* 黄: 10分〜7分 */
+.color-yellow {
+  color: #ffc107;
+}
+/* 赤: 7分〜6分 */
+.color-red {
+  color: #dc3545;
+}
+
+footer {
+  margin-top: 30px;
+  text-align: center;
+  color: #6c757d;
+}
