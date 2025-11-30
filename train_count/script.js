@@ -145,8 +145,19 @@ async function initializeData() {
     renderTrainList();
     fetchAndRenderStatus();
 
+    // 1秒ごとのカウントダウン
     setInterval(updateCountdown, 1000);
+    // 30秒ごとの運行状況の動的更新
     setInterval(fetchAndRenderStatus, 30000);
+
+    // -------------------------------------------------------------------
+    // 🔥 追加: 2分ごとのページ全体リロード機能 🔥
+    // -------------------------------------------------------------------
+    const RELOAD_INTERVAL_MS = 120000; // 2分 = 120,000ミリ秒
+    setInterval(() => {
+      console.log("2分が経過したため、ページ全体をリロードします。");
+      location.reload();
+    }, RELOAD_INTERVAL_MS);
   } catch (error) {
     console.error(`初期データの読み込みに失敗しました:`, error);
     document.getElementById("countdown-list").innerHTML =
