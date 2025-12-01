@@ -65,6 +65,7 @@ async function fetchAndRenderStatus() {
     config.data_paths.data_root + config.data_paths.status_file;
 
   try {
+    // キャッシュ無効化とno-storeオプションで最新のJSONを取得
     const response = await fetch(STATUS_URL + "?t=" + Date.now(), {
       cache: "no-store",
     });
@@ -131,21 +132,18 @@ async function initializeData() {
 
     trainsData = data.trains;
 
-    // 列車データを発車時刻順にソート (時:分を数値として扱う)
-    trainsData.sort((a, b) => {
-      const timeA = a.departure_time.replace(":", "");
-      const timeB = b.departure_time.replace(":", "");
-      return timeA - timeB;
-    });
+    // 【重要】ソートは行いません。JSONファイルが時系列順であることを前提とします。
 
     // 5. 表示データの準備
     const now = new Date();
-    // 過ぎていない列車のみを抽出
+
+    // 発車時刻が過ぎた列車をフィルタリングし、未来の列車のみを残す
     const futureTrains = trainsData.filter((train) => {
       const depTime = parseDepartureTime(train.departure_time);
       return depTime.getTime() > now.getTime();
     });
 
+    // JSONが時系列で正しく並んでいることを前提として、次のN本を抽出
     displayTrains = futureTrains.slice(0, config.display_settings.count_limit);
 
     // 6. 描画開始とタイマー設定
@@ -206,7 +204,7 @@ function renderTrainList() {
 }
 
 /**
- * 1秒ごとのカウントダウン更新処理
+ * 1秒ごとのカウントダウン更新処理（発車した列車を削除し、次列車を繰り上げる）
  */
 function updateCountdown() {
   if (!config.display_settings) return;
@@ -229,6 +227,7 @@ function updateCountdown() {
     const remainingMs = departureTime.getTime() - now.getTime();
     const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
 
+    // 残り時間が0以下であれば削除対象
     if (remainingSec <= 0) {
       trainsToRemove.push(train);
       shouldReRender = true;
@@ -246,19 +245,15 @@ function updateCountdown() {
       // trainsData全体から、まだ発車時刻が来ておらず、displayTrainsに含まれていない列車を探す
       const nextTrain = trainsData.find(
         (t) =>
+          // 発車時刻が現在時刻より未来であること
           parseDepartureTime(t.departure_time).getTime() > now.getTime() &&
+          // 現在表示中のリストにまだ含まれていないこと (重複防止)
           !displayTrains.some((dt) => dt.departure_time === t.departure_time)
       );
 
       if (nextTrain) {
         displayTrains.push(nextTrain);
-        // 追加後、表示リストを時刻順でソートし直す (次発が常に先頭に来る)
-        displayTrains.sort((a, b) => {
-          return (
-            parseDepartureTime(a.departure_time).getTime() -
-            parseDepartureTime(b.departure_time).getTime()
-          );
-        });
+        // ソートは行わない (JSONの順序が時系列であることを前提とするため、追加された列車が自然と末尾に来る)
       } else {
         break; // 次の列車が見つからなければループ終了
       }
