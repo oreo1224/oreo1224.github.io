@@ -23,7 +23,12 @@ h1 {
   padding: 3px 8px;
   border-radius: 4px;
   display: inline-block;
-  background-color: #f8d7da; /* Default background for red alert */
+}
+
+#status-time {
+  font-size: 0.7em;
+  margin-left: 10px;
+  color: #6c757d;
 }
 
 /* 電車ごとの行のスタイル */
@@ -35,41 +40,60 @@ h1 {
   margin-bottom: 12px;
   border-radius: 10px;
   background-color: #ffffff;
-  transition: background-color 0.5s, opacity 0.5s;
+  transition: background-color 0.5s, opacity 0.5s, border-left 0.5s; /* 遷移を追加 */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 5px solid transparent; /* デフォルトの透明な枠 */
 }
 
 .train-details {
   font-size: 1.1em;
 }
 
+/* ---------------------------------- */
+/* 🔥 行全体の色変更スタイル 🔥 */
+/* ---------------------------------- */
+
+/* 黄色閾値以下の行のスタイル */
+.train-row.row-color-yellow {
+  background-color: #fffac2; /* 薄い黄色 */
+  border-left: 5px solid #ffcc00; /* 左側に太い黄色線 */
+}
+
+/* 赤色閾値以下の行のスタイル */
+.train-row.row-color-red {
+  background-color: #ffe0e0; /* 薄い赤色 */
+  border-left: 5px solid #f44336; /* 左側に太い赤色線 */
+}
+
 /* グレーアウト (6分未満) */
-.grayed-out {
+.train-row.grayed-out {
   background-color: #dee2e6 !important;
   opacity: 0.6;
+  border-left: 5px solid #adb5bd; /* グレーの枠線 */
 }
 
 /* カウントダウン表示のスタイル */
 .countdown-display {
   font-size: 2.2em;
   font-weight: 900;
-  width: 150px; /* 幅を固定して表示揺れを防ぐ */
+  width: 150px;
   text-align: right;
   transition: color 0.5s;
 }
 
-/* 色の変化（JavaScriptでクラスを付与） */
-/* 緑: 10分以上（初期値）*/
-.color-green {
-  color: #28a745;
+/* ---------------------------------- */
+/* カウントダウン文字色の定義 */
+/* ---------------------------------- */
+.countdown-display.color-green {
+  color: #28a745; /* 緑 */
 }
-/* 黄: 10分〜7分 */
-.color-yellow {
-  color: #ffc107;
+
+.countdown-display.color-yellow {
+  color: #ffcc00; /* 黄 */
 }
-/* 赤: 7分〜6分 */
-.color-red {
-  color: #dc3545;
+
+.countdown-display.color-red {
+  color: #f44336; /* 赤 */
 }
 
 footer {
