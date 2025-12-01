@@ -28,15 +28,15 @@ function formatTime(totalSeconds) {
 }
 
 /**
- * 'HH:MM'形式の時刻文字列を、今日のその時刻のDateオブジェクトに変換
- * 時刻が過去の場合は翌日と見なすロジックを含む。
+ * 'HH:MM'形式の時刻文字列を、現在の日のその時刻のDateオブジェクトに変換
+ * 【重要】翌日への修正は、この関数内ではなく initializeData または updateCountdown で行う。
  * @param {string} timeStr - 'HH:MM'形式の時刻
  * @returns {Date} その時刻のDateオブジェクト
  */
 function parseDepartureTime(timeStr) {
   const [hours, minutes] = timeStr.split(":").map(Number);
   const now = new Date();
-  // 現在の年月日をベースに発車時刻を設定
+  // 時刻表の時刻を、常に「現在の年月日」で作成する
   let departure = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -45,12 +45,6 @@ function parseDepartureTime(timeStr) {
     minutes,
     0
   );
-
-  // 現在時刻より過去の発車時刻（許容誤差1分）の場合、翌日と見なす
-  if (departure.getTime() < now.getTime() - 60 * 1000) {
-    departure.setDate(departure.getDate() + 1);
-  }
-
   return departure;
 }
 
@@ -58,7 +52,6 @@ function parseDepartureTime(timeStr) {
  * 運行情報を取得し、表示を更新する関数
  */
 async function fetchAndRenderStatus() {
-  // configがまだロードされていない場合は処理しない
   if (!config.data_paths) return;
 
   const STATUS_URL =
@@ -134,19 +127,32 @@ async function initializeData() {
 
     // 5. 表示データの準備
     const now = new Date();
-
-    // 🔥 【修正】現在時刻より後に発車する最初の列車を探す 🔥
-    let startIndex = 0;
+    let startIndex = -1;
 
     // JSONの先頭から順番にチェックし、発車時刻が現在時刻よりも未来になる最初のインデックスを見つける
     for (let i = 0; i < trainsData.length; i++) {
-      const depTime = parseDepartureTime(trainsData[i].departure_time);
+      const train = trainsData[i];
 
-      // 発車時刻が現在時刻より未来であれば、その列車から表示を開始する
+      // 列車時刻を「今日の」日付で作成
+      let depTime = parseDepartureTime(train.departure_time);
+
+      const [hours] = train.departure_time.split(":").map(Number);
+
+      // 終電後の0時台の列車（例: 4時まで）の場合、強制的に翌日の日付に修正する
+      if (hours >= 0 && hours <= 4) {
+        depTime.setDate(depTime.getDate() + 1);
+      }
+
+      // 時刻が現在時刻より未来であれば、その列車から表示を開始する
       if (depTime.getTime() > now.getTime()) {
         startIndex = i;
         break;
       }
+    }
+
+    // 終電後の場合、始発から表示を開始する
+    if (startIndex === -1) {
+      startIndex = 0;
     }
 
     // startIndexからN本分を抽出する
@@ -192,7 +198,14 @@ function renderTrainList() {
 
   displayTrains.forEach((train, index) => {
     const now = new Date();
-    const departureTime = parseDepartureTime(train.departure_time);
+
+    // 発車時刻を計算する際、翌日修正ロジックを適用
+    let departureTime = parseDepartureTime(train.departure_time);
+    const [hours] = train.departure_time.split(":").map(Number);
+    if (hours >= 0 && hours <= 4) {
+      departureTime.setDate(departureTime.getDate() + 1);
+    }
+
     const remainingMs = departureTime.getTime() - now.getTime();
     const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
 
@@ -224,19 +237,26 @@ function updateCountdown() {
   const THRESHOLD_YELLOW = config.display_settings.threshold_yellow_min * 60;
 
   const now = new Date();
-  const listElement = document.getElementById("countdown-list");
-  const rows = listElement.querySelectorAll(".train-row");
+  const rows = document
+    .getElementById("countdown-list")
+    .querySelectorAll(".train-row");
 
   let shouldReRender = false;
   let trainsToRemove = [];
 
-  // 最初に発車済みの列車を特定し、表示リストから削除
+  // 最初に発車済みの列車を特定
   for (const train of displayTrains) {
-    const departureTime = parseDepartureTime(train.departure_time);
-    const remainingMs = departureTime.getTime() - now.getTime();
-    const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
+    let departureTime = parseDepartureTime(train.departure_time);
+    const [hours] = train.departure_time.split(":").map(Number);
+    if (hours >= 0 && hours <= 4) {
+      departureTime.setDate(departureTime.getDate() + 1);
+    }
 
-    // 残り時間が0以下であれば削除対象
+    const remainingSec = Math.max(
+      0,
+      Math.floor((departureTime.getTime() - now.getTime()) / 1000)
+    );
+
     if (remainingSec <= 0) {
       trainsToRemove.push(train);
       shouldReRender = true;
@@ -252,17 +272,22 @@ function updateCountdown() {
     // --- 次の列車を繰り上げて表示リストに追加 ---
     while (displayTrains.length < config.display_settings.count_limit) {
       // trainsData全体から、まだ発車時刻が来ておらず、displayTrainsに含まれていない列車を探す
-      const nextTrain = trainsData.find(
-        (t) =>
-          // 発車時刻が現在時刻より未来であること
-          parseDepartureTime(t.departure_time).getTime() > now.getTime() &&
-          // 現在表示中のリストにまだ含まれていないこと (重複防止)
+      const nextTrain = trainsData.find((t) => {
+        let departureTime = parseDepartureTime(t.departure_time);
+        const [hours] = t.departure_time.split(":").map(Number);
+        if (hours >= 0 && hours <= 4) {
+          departureTime.setDate(departureTime.getDate() + 1);
+        }
+
+        // 現在時刻より未来かつ、まだ表示リストに含まれていないこと
+        return (
+          departureTime.getTime() > now.getTime() &&
           !displayTrains.some((dt) => dt.departure_time === t.departure_time)
-      );
+        );
+      });
 
       if (nextTrain) {
         displayTrains.push(nextTrain);
-        // ソートは行わない (JSONの順序が時系列であることを前提とするため、追加された列車が自然と末尾に来る)
       } else {
         break; // 次の列車が見つからなければループ終了
       }
@@ -276,9 +301,16 @@ function updateCountdown() {
       const row = rows[i];
       const departureStr = row.dataset.departure;
 
-      const departureTime = parseDepartureTime(departureStr);
-      const remainingMs = departureTime.getTime() - now.getTime();
-      const remainingSec = Math.max(0, Math.floor(remainingMs / 1000));
+      let departureTime = parseDepartureTime(departureStr);
+      const [hours] = departureStr.split(":").map(Number);
+      if (hours >= 0 && hours <= 4) {
+        departureTime.setDate(departureTime.getDate() + 1);
+      }
+
+      const remainingSec = Math.max(
+        0,
+        Math.floor((departureTime.getTime() - now.getTime()) / 1000)
+      );
 
       const display = row.querySelector(".countdown-display");
       display.textContent = formatTime(remainingSec);
