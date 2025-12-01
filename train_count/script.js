@@ -132,19 +132,28 @@ async function initializeData() {
 
     trainsData = data.trains;
 
-    // 【重要】ソートは行いません。JSONファイルが時系列順であることを前提とします。
-
     // 5. 表示データの準備
     const now = new Date();
 
-    // 発車時刻が過ぎた列車をフィルタリングし、未来の列車のみを残す
-    const futureTrains = trainsData.filter((train) => {
-      const depTime = parseDepartureTime(train.departure_time);
-      return depTime.getTime() > now.getTime();
-    });
+    // 🔥 【修正】現在時刻より後に発車する最初の列車を探す 🔥
+    let startIndex = 0;
 
-    // JSONが時系列で正しく並んでいることを前提として、次のN本を抽出
-    displayTrains = futureTrains.slice(0, config.display_settings.count_limit);
+    // JSONの先頭から順番にチェックし、発車時刻が現在時刻よりも未来になる最初のインデックスを見つける
+    for (let i = 0; i < trainsData.length; i++) {
+      const depTime = parseDepartureTime(trainsData[i].departure_time);
+
+      // 発車時刻が現在時刻より未来であれば、その列車から表示を開始する
+      if (depTime.getTime() > now.getTime()) {
+        startIndex = i;
+        break;
+      }
+    }
+
+    // startIndexからN本分を抽出する
+    displayTrains = trainsData.slice(
+      startIndex,
+      startIndex + config.display_settings.count_limit
+    );
 
     // 6. 描画開始とタイマー設定
     renderTrainList();
