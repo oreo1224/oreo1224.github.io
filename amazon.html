@@ -3,22 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Amazonアフィリエイトリンク生成ツール</title>
+  <title>Amazonリンクジャンプ</title>
   <style>
-    :root {
-      --bg: #f6f7fb;
-      --card: #ffffff;
-      --text: #172033;
-      --muted: #65708a;
-      --border: #dfe4ee;
-      --primary: #ff9900;
-      --primary-dark: #e38700;
-      --danger: #d64545;
-      --success: #167a3f;
-      --shadow: 0 18px 45px rgba(23, 32, 51, 0.10);
-      --radius: 20px;
-    }
-
     * {
       box-sizing: border-box;
     }
@@ -27,345 +13,139 @@
       margin: 0;
       min-height: 100vh;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(255, 153, 0, 0.18), transparent 36rem),
-        linear-gradient(135deg, #f8fafc 0%, var(--bg) 100%);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 16px;
+      background: #f6f7f9;
+      color: #111827;
+      display: grid;
+      place-items: center;
+      padding: 24px;
     }
 
-    .app {
-      width: min(920px, 100%);
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border: 1px solid rgba(255, 153, 0, 0.35);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.72);
-      color: #8a5200;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 12px;
+    main {
+      width: min(560px, 100%);
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 16px 40px rgba(17, 24, 39, 0.08);
     }
 
     h1 {
-      margin: 0;
-      font-size: clamp(28px, 5vw, 48px);
+      margin: 0 0 10px;
+      font-size: 28px;
       letter-spacing: -0.04em;
-      line-height: 1.05;
+      line-height: 1.15;
     }
 
-    .lead {
-      margin: 14px auto 0;
-      max-width: 680px;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1.75;
-    }
-
-    .card {
-      background: rgba(255, 255, 255, 0.88);
-      border: 1px solid rgba(223, 228, 238, 0.85);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: clamp(18px, 4vw, 34px);
-      backdrop-filter: blur(10px);
+    p {
+      margin: 0 0 22px;
+      color: #6b7280;
+      line-height: 1.7;
+      font-size: 14px;
     }
 
     label {
       display: block;
-      font-size: 14px;
-      font-weight: 800;
-      margin-bottom: 10px;
-    }
-
-    textarea,
-    input {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #fff;
-      color: var(--text);
-      font: inherit;
-      outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    textarea {
-      min-height: 116px;
-      padding: 15px 16px;
-      resize: vertical;
-      line-height: 1.6;
-    }
-
-    input {
-      padding: 13px 14px;
-    }
-
-    textarea:focus,
-    input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.16);
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 220px;
-      gap: 14px;
-      margin-top: 16px;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    button,
-    a.button-link {
-      border: 0;
-      border-radius: 14px;
-      padding: 13px 18px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: transform 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
-    }
-
-    button:hover,
-    a.button-link:hover {
-      transform: translateY(-1px);
-    }
-
-    .primary {
-      background: var(--primary);
-      color: #191919;
-      box-shadow: 0 12px 26px rgba(255, 153, 0, 0.28);
-    }
-
-    .primary:hover {
-      background: var(--primary-dark);
-    }
-
-    .secondary {
-      background: #eef2f8;
-      color: var(--text);
-    }
-
-    .ghost {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid var(--border);
-    }
-
-    .result {
-      margin-top: 22px;
-      display: none;
-    }
-
-    .result.show {
-      display: block;
-      animation: fadeIn 0.22s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .output-box {
-      border: 1px solid var(--border);
-      background: #fbfcff;
-      border-radius: 16px;
-      padding: 14px;
-    }
-
-    .output-title {
-      margin: 0 0 8px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .output-value {
-      width: 100%;
-      overflow-wrap: anywhere;
-      line-height: 1.6;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 14px;
-      color: #1f2937;
-    }
-
-    .message {
-      margin-top: 14px;
-      min-height: 24px;
+      margin-bottom: 8px;
       font-size: 14px;
       font-weight: 700;
     }
 
-    .message.error {
-      color: var(--danger);
+    input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 0 14px;
+      font-size: 16px;
+      outline: none;
     }
 
-    .message.success {
-      color: var(--success);
+    input:focus {
+      border-color: #ff9900;
+      box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.16);
     }
 
-    .tips {
-      margin-top: 20px;
-      border-top: 1px solid var(--border);
-      padding-top: 18px;
-      color: var(--muted);
+    button {
+      width: 100%;
+      height: 54px;
+      margin-top: 14px;
+      border: 0;
+      border-radius: 12px;
+      background: #ff9900;
+      color: #111827;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ed8b00;
+    }
+
+    .message {
+      min-height: 22px;
+      margin-top: 14px;
+      color: #dc2626;
       font-size: 14px;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .hint {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+      color: #6b7280;
+      font-size: 13px;
       line-height: 1.7;
     }
 
-    .tips strong {
-      color: var(--text);
-    }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 18px;
-    }
-
-    @media (max-width: 720px) {
-      body {
-        align-items: flex-start;
-      }
-
-      .row {
-        grid-template-columns: 1fr;
-      }
-
-      .actions button,
-      .actions a.button-link {
-        width: 100%;
-      }
+    .hint code {
+      color: #374151;
+      background: #f3f4f6;
+      padding: 2px 5px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <section class="hero">
-      <div class="badge">Amazon Associates Link Generator</div>
-      <h1>Amazonアフィリエイトリンク生成ツール</h1>
-      <p class="lead">
-        Amazonの商品URLを貼るだけで、トラッキングID <strong>oreo1224-22</strong> 付きのアフィリエイトリンクを生成します。
-      </p>
-    </section>
+  <main>
+    <h1>Amazonリンクジャンプ</h1>
+    <p>Amazonの商品URL、またはASINを入力して、アフィリエイトリンクでAmazonへ移動します。</p>
 
-    <section class="card" aria-label="アフィリエイトリンク生成フォーム">
-      <label for="amazonUrl">Amazon商品URL</label>
-      <textarea id="amazonUrl" placeholder="例：https://www.amazon.co.jp/dp/B0C1234567 または https://www.amazon.co.jp/gp/product/B0C1234567"></textarea>
+    <form id="form">
+      <label for="amazonInput">Amazon商品URL / ASIN</label>
+      <input
+        id="amazonInput"
+        type="text"
+        placeholder="https://www.amazon.co.jp/dp/B0XXXXXXXX または B0XXXXXXXX"
+        autocomplete="off"
+        autofocus
+      />
 
-      <div class="row">
-        <div>
-          <label for="tag">トラッキングID</label>
-          <input id="tag" value="oreo1224-22" autocomplete="off" />
-        </div>
-        <div>
-          <label for="marketplace">マーケットプレイス</label>
-          <input id="marketplace" value="amazon.co.jp" autocomplete="off" />
-        </div>
-      </div>
+      <button type="submit">Amazonへジャンプ</button>
+      <div id="message" class="message" aria-live="polite"></div>
+    </form>
 
-      <div class="actions">
-        <button class="primary" id="generateBtn" type="button">リンクを生成</button>
-        <button class="secondary" id="copyBtn" type="button">コピー</button>
-        <button class="ghost" id="clearBtn" type="button">クリア</button>
-        <a class="button-link ghost" id="openBtn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">開く</a>
-      </div>
-
-      <div id="message" class="message" role="status" aria-live="polite"></div>
-
-      <div id="result" class="result">
-        <div class="result-grid">
-          <div class="output-box">
-            <p class="output-title">ASIN</p>
-            <div id="asinOutput" class="output-value">-</div>
-          </div>
-          <div class="output-box">
-            <p class="output-title">アフィリエイトリンク</p>
-            <div id="linkOutput" class="output-value">-</div>
-          </div>
-          <div class="output-box">
-            <p class="output-title">HTML埋め込み用</p>
-            <div id="htmlOutput" class="output-value">-</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tips">
-        <strong>対応URL例：</strong><br />
-        https://www.amazon.co.jp/dp/ASIN<br />
-        https://www.amazon.co.jp/gp/product/ASIN<br />
-        https://www.amazon.co.jp/商品名/dp/ASIN<br />
-        短縮URLや一部のリダイレクトURLはASINを取得できない場合があります。
-      </div>
-    </section>
-
-    <footer>
-      GitHub Pages対応・外部ライブラリ不使用
-    </footer>
+    <div class="hint">
+      対応形式：<br>
+      <code>https://www.amazon.co.jp/dp/ASIN</code><br>
+      <code>https://www.amazon.co.jp/gp/product/ASIN</code><br>
+      <code>ASINのみ</code>
+    </div>
   </main>
 
   <script>
-    const amazonUrlEl = document.getElementById("amazonUrl");
-    const tagEl = document.getElementById("tag");
-    const marketplaceEl = document.getElementById("marketplace");
-    const generateBtn = document.getElementById("generateBtn");
-    const copyBtn = document.getElementById("copyBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const openBtn = document.getElementById("openBtn");
-    const messageEl = document.getElementById("message");
-    const resultEl = document.getElementById("result");
-    const asinOutputEl = document.getElementById("asinOutput");
-    const linkOutputEl = document.getElementById("linkOutput");
-    const htmlOutputEl = document.getElementById("htmlOutput");
+    const TRACKING_ID = "oreo1224-22";
+    const MARKETPLACE = "amazon.co.jp";
 
-    let latestAffiliateUrl = "";
+    const form = document.getElementById("form");
+    const input = document.getElementById("amazonInput");
+    const message = document.getElementById("message");
 
-    function setMessage(text, type) {
-      messageEl.textContent = text;
-      messageEl.className = "message" + (type ? " " + type : "");
-    }
+    function extractAsin(value) {
+      const text = value.trim();
 
-    function normalizeMarketplace(value) {
-      return value
-        .trim()
-        .replace(/^https?:\/\//i, "")
-        .replace(/^www\./i, "")
-        .replace(/\/$/, "");
-    }
-
-    function extractAsin(input) {
-      const text = input.trim();
       if (!text) return null;
 
       const patterns = [
@@ -378,98 +158,33 @@
 
       for (const pattern of patterns) {
         const match = text.match(pattern);
-        if (match) return match[1].toUpperCase();
+        if (match) {
+          return match[1].toUpperCase();
+        }
       }
 
       return null;
     }
 
-    function escapeHtml(value) {
-      return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    function buildAffiliateUrl(asin) {
+      return `https://www.${MARKETPLACE}/dp/${asin}?tag=${encodeURIComponent(TRACKING_ID)}`;
     }
 
-    function buildAffiliateLink(asin, tag, marketplace) {
-      const safeMarketplace = normalizeMarketplace(marketplace) || "amazon.co.jp";
-      const safeTag = encodeURIComponent(tag.trim());
-      return `https://www.${safeMarketplace}/dp/${asin}?tag=${safeTag}`;
-    }
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
 
-    function generateLink() {
-      const asin = extractAsin(amazonUrlEl.value);
-      const tag = tagEl.value.trim();
-      const marketplace = marketplaceEl.value.trim();
+      const asin = extractAsin(input.value);
 
       if (!asin) {
-        latestAffiliateUrl = "";
-        resultEl.classList.remove("show");
-        openBtn.style.display = "none";
-        setMessage("ASINを取得できませんでした。Amazonの商品URL、または10桁のASINを入力してください。", "error");
+        message.textContent = "ASINを取得できませんでした。Amazonの商品URL、または10桁のASINを入力してください。";
+        input.focus();
         return;
       }
 
-      if (!tag) {
-        setMessage("トラッキングIDを入力してください。", "error");
-        return;
-      }
+      message.textContent = "";
+      const affiliateUrl = buildAffiliateUrl(asin);
 
-      latestAffiliateUrl = buildAffiliateLink(asin, tag, marketplace);
-      const htmlSnippet = `<a href="${escapeHtml(latestAffiliateUrl)}" target="_blank" rel="nofollow sponsored noopener">Amazonで見る</a>`;
-
-      asinOutputEl.textContent = asin;
-      linkOutputEl.textContent = latestAffiliateUrl;
-      htmlOutputEl.textContent = htmlSnippet;
-      openBtn.href = latestAffiliateUrl;
-      openBtn.style.display = "inline-flex";
-      resultEl.classList.add("show");
-      setMessage("リンクを生成しました。", "success");
-    }
-
-    async function copyLatestLink() {
-      if (!latestAffiliateUrl) {
-        generateLink();
-      }
-
-      if (!latestAffiliateUrl) return;
-
-      try {
-        await navigator.clipboard.writeText(latestAffiliateUrl);
-        setMessage("アフィリエイトリンクをコピーしました。", "success");
-      } catch (error) {
-        const tempInput = document.createElement("textarea");
-        tempInput.value = latestAffiliateUrl;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
-        setMessage("アフィリエイトリンクをコピーしました。", "success");
-      }
-    }
-
-    function clearForm() {
-      amazonUrlEl.value = "";
-      latestAffiliateUrl = "";
-      asinOutputEl.textContent = "-";
-      linkOutputEl.textContent = "-";
-      htmlOutputEl.textContent = "-";
-      resultEl.classList.remove("show");
-      openBtn.style.display = "none";
-      setMessage("", "");
-      amazonUrlEl.focus();
-    }
-
-    generateBtn.addEventListener("click", generateLink);
-    copyBtn.addEventListener("click", copyLatestLink);
-    clearBtn.addEventListener("click", clearForm);
-
-    amazonUrlEl.addEventListener("keydown", function (event) {
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        generateLink();
-      }
+      window.location.href = affiliateUrl;
     });
   </script>
 </body>
