@@ -48,6 +48,19 @@
             カテゴリ
             <input id="category" maxlength="40" autocomplete="off" placeholder="例：フード" />
           </label>
+          <label>
+            商品ボタン色
+            <select id="color-code">
+              <option value="1">1：水色</option>
+              <option value="2">2：緑</option>
+              <option value="3">3：黄</option>
+              <option value="4">4：オレンジ</option>
+              <option value="5">5：紫</option>
+              <option value="6">6：グレー</option>
+              <option value="7">7：青緑</option>
+              <option value="8">8：ピンク</option>
+            </select>
+          </label>
           <div class="toggles">
             <label><input id="active" type="checkbox" checked /> 販売対象</label>
             <label><input id="sold-out" type="checkbox" /> 売切</label>
@@ -71,7 +84,7 @@
         <div class="csv-tools">
           <div>
             <h3>CSV一括登録</h3>
-            <p><code>id,name,priceYen,category,sortOrder,active,soldOut,voucherEligible</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
+            <p><code>id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
           </div>
           <div class="csv-actions">
             <button id="download-template-button" class="button secondary" type="button">CSV雛形をダウンロード</button>

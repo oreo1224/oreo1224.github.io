@@ -27,6 +27,7 @@ products/{auto-id}
 ├ active: bool
 ├ soldOut: bool
 ├ voucherEligible: bool
+├ colorCode: int (1〜8)
 ├ createdAt: int
 └ updatedAt: int
 ```
@@ -38,11 +39,12 @@ POS側の商品マスタ取得・売上登録画面は次の実装対象です�
 画面上の「CSV雛形をダウンロード」から雛形を取得できます。「登録済みをCSV出力」は既存商品を編集可能なCSVとして出力します。UTF-8（BOM付き）のCSVを想定し、次のヘッダーを使います。
 
 ```csv
-id,name,priceYen,category,sortOrder,active,soldOut,voucherEligible
-,焼きそば,500,フード,10,true,false,true
+id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible
+,焼きそば,500,フード,10,1,true,false,true
 ```
 
 - `id` が空の行は新規登録です。
 - 既存のFirestoreドキュメントIDを `id` に入れた行は更新です。
 - `active`、`soldOut`、`voucherEligible` は `true/false` または `1/0` を使えます。
+- `colorCode` は商品ボタンの色で、`1`〜`8` を指定します。
 - 一度に登録できるのは200件までです。

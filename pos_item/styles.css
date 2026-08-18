@@ -21,8 +21,8 @@ h2 { margin-bottom: 4px; }
 form, label { display: grid; gap: 7px; }
 form { gap: 16px; }
 label { font-weight: 700; font-size: 14px; }
-input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #b8c1cf; border-radius: 8px; font: inherit; }
-input:focus { outline: 3px solid rgb(25 118 210 / 22%); border-color: #1976d2; }
+input, select { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #b8c1cf; border-radius: 8px; font: inherit; background: #fff; }
+input:focus, select:focus { outline: 3px solid rgb(25 118 210 / 22%); border-color: #1976d2; }
 .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .toggles { display: flex; flex-wrap: wrap; gap: 14px; }
 .toggles label { display: flex; align-items: center; gap: 7px; }

@@ -30,6 +30,7 @@ const els = {
   name: document.querySelector("#name"),
   priceYen: document.querySelector("#price-yen"),
   category: document.querySelector("#category"),
+  colorCode: document.querySelector("#color-code"),
   sortOrder: document.querySelector("#sort-order"),
   active: document.querySelector("#active"),
   soldOut: document.querySelector("#sold-out"),
@@ -56,6 +57,7 @@ function clearEditor() {
   els.form.reset();
   els.productId.value = "";
   els.sortOrder.value = "0";
+  els.colorCode.value = "1";
   els.active.checked = true;
   els.voucherEligible.checked = true;
   els.editorTitle.textContent = "商品を登録";
@@ -66,10 +68,12 @@ function productPayload(existing) {
   const priceYen = Number(els.priceYen.value);
   const sortOrder = Number(els.sortOrder.value);
   const category = els.category.value.trim();
+  const colorCode = Number(els.colorCode.value);
   if (!name) throw new Error("商品名を入力してください。");
   if (!Number.isSafeInteger(priceYen) || priceYen < 0) throw new Error("販売価格は0円以上の整数で入力してください。");
   if (!Number.isSafeInteger(sortOrder)) throw new Error("表示順は整数で入力してください。");
   if (category.length > 40) throw new Error("カテゴリは40文字以内で入力してください。");
+  if (!Number.isSafeInteger(colorCode) || colorCode < 1 || colorCode > 8) throw new Error("商品ボタン色は1〜8で選択してください。");
   const now = Date.now();
   return {
     name,
@@ -79,6 +83,7 @@ function productPayload(existing) {
     active: els.active.checked,
     soldOut: els.soldOut.checked,
     voucherEligible: els.voucherEligible.checked,
+    colorCode,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now
   };
@@ -126,11 +131,14 @@ function csvRecord(headers, row) {
   const price = data.priceYen || data["販売価格"] || data["価格"];
   const category = data.category || data["カテゴリ"] || "";
   const sortOrder = data.sortOrder || data["表示順"] || "0";
+  const color = data.colorCode || data["色"] || "1";
   if (!name) throw new Error("商品名（name）が空です。");
   const priceYen = Number(price);
   const order = Number(sortOrder);
+  const colorCode = Number(color);
   if (!Number.isSafeInteger(priceYen) || priceYen < 0) throw new Error(`「${name}」の販売価格が不正です。`);
   if (!Number.isSafeInteger(order)) throw new Error(`「${name}」の表示順が不正です。`);
+  if (!Number.isSafeInteger(colorCode) || colorCode < 1 || colorCode > 8) throw new Error(`「${name}」の商品ボタン色は1〜8で指定してください。`);
   return {
     id: data.id,
     name,
@@ -139,7 +147,8 @@ function csvRecord(headers, row) {
     sortOrder: order,
     active: csvBoolean(data.active || data["販売対象"], true),
     soldOut: csvBoolean(data.soldOut || data["売切"], false),
-    voucherEligible: csvBoolean(data.voucherEligible || data["引換券利用可"], true)
+    voucherEligible: csvBoolean(data.voucherEligible || data["引換券利用可"], true),
+    colorCode
   };
 }
 
@@ -198,7 +207,7 @@ function renderProducts() {
     const fragment = els.template.content.cloneNode(true);
     fragment.querySelector(".product-name").textContent = product.name;
     fragment.querySelector(".product-meta").textContent =
-      `¥${product.priceYen.toLocaleString("ja-JP")}  /  ${product.category || "カテゴリ未設定"}  /  表示順 ${product.sortOrder}`;
+      `¥${product.priceYen.toLocaleString("ja-JP")}  /  ${product.category || "カテゴリ未設定"}  /  表示順 ${product.sortOrder}  /  色 ${product.colorCode ?? 1}`;
     const badges = fragment.querySelector(".badges");
     badges.append(
       badge(product.active ? "販売対象" : "停止", product.active ? "" : "neutral"),
@@ -211,6 +220,7 @@ function renderProducts() {
       els.priceYen.value = product.priceYen;
       els.category.value = product.category;
       els.sortOrder.value = product.sortOrder;
+      els.colorCode.value = product.colorCode ?? 1;
       els.active.checked = product.active;
       els.soldOut.checked = product.soldOut;
       els.voucherEligible.checked = product.voucherEligible;
@@ -254,9 +264,9 @@ els.reset.addEventListener("click", clearEditor);
 els.filter.addEventListener("input", renderProducts);
 els.downloadTemplate.addEventListener("click", () => {
   const csv = [
-    "id,name,priceYen,category,sortOrder,active,soldOut,voucherEligible",
-    ",焼きそば,500,フード,10,true,false,true",
-    ",フランクフルト,300,フード,20,true,false,true"
+    "id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible",
+    ",焼きそば,500,フード,10,1,true,false,true",
+    ",フランクフルト,300,フード,20,4,true,false,true"
   ].join("\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
@@ -270,7 +280,7 @@ els.exportProducts.addEventListener("click", () => {
     const text = String(value ?? "");
     return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   };
-  const header = ["id", "name", "priceYen", "category", "sortOrder", "active", "soldOut", "voucherEligible"];
+  const header = ["id", "name", "priceYen", "category", "sortOrder", "colorCode", "active", "soldOut", "voucherEligible"];
   const rows = products.map((product) => header.map((key) => escapeCell(product[key])).join(","));
   const url = URL.createObjectURL(new Blob(["\uFEFF", [header.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
