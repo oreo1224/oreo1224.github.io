@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="manifest.json" />
-  <title>JANコード検索 - ヤマダ電機</title>
+  <title>品出し支援</title>
   <script>
   if ("ServiceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").then(registration => {
@@ -78,15 +78,15 @@
   </style>
 </head>
 <body>
-  <h2>JANコード検索</h2>
+  <h2>品出し支援 v2.2</h2>
   <input id="input" type="number" maxlength="13" placeholder="13桁のJANコードを入力" autofocus />
   <button id="clearBtn" type="button">検索結果をクリア</button>
   <table id="resultsTable">
     <thead>
       <tr>
         <th>JANコード</th>
-        <th>抽出値（10桁）</th>
-        <th>検索タイトル</th>
+        <th>商品CD</th>
+        <th>タイトル</th>
       </tr>
     </thead>
     <tbody id="resultsBody"></tbody>
@@ -103,7 +103,7 @@
       if (e.key === "Enter") {
         const value = input.value.trim();
         if (!/^\d{13}$/.test(value)) {
-          alert("13桁の数字を入力してください");
+          alert("13桁のJANを入力してください");
           return;
         }
 

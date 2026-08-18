@@ -13,7 +13,7 @@
   },
   "display_settings": {
     "count_limit": 4,
-    "threshold_gray_min": 6,
+    "threshold_gray_min": 5,
     "threshold_red_min": 7,
     "threshold_yellow_min": 10
   }
