@@ -6,9 +6,9 @@ body { min-width: 320px; min-height: 100vh; margin: 0; }
 .column h1 { margin: 0 0 clamp(18px, 3vw, 42px); text-align: center; font-size: clamp(28px, 4vw, 58px); letter-spacing: .07em; }
 .cooking { background: #1e6fbe; }
 .calling { background: #2f8656; }
-.numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: clamp(12px, 2vw, 28px); align-content: start; }
+.numbers { display: grid; grid-template-columns: repeat(2, minmax(120px, 220px)); justify-content: center; gap: clamp(12px, 2vw, 28px); align-content: start; }
 .number { padding: .18em .08em; border-radius: 18px; background: rgb(255 255 255 / 16%); text-align: center; font-size: clamp(62px, 11vw, 170px); font-weight: 900; line-height: 1; letter-spacing: .02em; }
 .empty { margin: 15vh 0 0; text-align: center; font-size: clamp(19px, 2.5vw, 34px); font-weight: 700; opacity: .75; }
 .connection { position: fixed; right: 12px; bottom: 8px; margin: 0; color: rgb(255 255 255 / 55%); font-size: 12px; }
 .connection.error { color: #ffc2c8; }
-@media (max-width: 640px) { .board { grid-template-columns: 1fr; } .column { min-height: 50vh; } }
+@media (max-width: 640px) { .board { grid-template-columns: 1fr; } .column { min-height: 50vh; } .numbers { grid-template-columns: repeat(2, minmax(110px, 180px)); } }
