@@ -69,6 +69,7 @@
             <label><input id="active" type="checkbox" checked /> 販売対象</label>
             <label><input id="sold-out" type="checkbox" /> 売切</label>
             <label><input id="voucher-eligible" type="checkbox" checked /> 引換券利用可</label>
+            <label><input id="topping-allowed" type="checkbox" /> トッピング選択可</label>
           </div>
           <div class="form-actions">
             <button class="button primary" type="submit">保存</button>
@@ -88,7 +89,7 @@
         <div class="csv-tools">
           <div>
             <h3>CSV一括登録</h3>
-            <p><code>id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
+            <p><code>id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
           </div>
           <div class="csv-actions">
             <button id="download-template-button" class="button secondary" type="button">CSV雛形をダウンロード</button>

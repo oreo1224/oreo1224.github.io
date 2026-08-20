@@ -33,6 +33,7 @@ const els = {
   active: document.querySelector("#active"),
   soldOut: document.querySelector("#sold-out"),
   voucherEligible: document.querySelector("#voucher-eligible"),
+  toppingAllowed: document.querySelector("#topping-allowed"),
   reset: document.querySelector("#reset-button"),
   filter: document.querySelector("#filter"),
   csvFile: document.querySelector("#csv-file"),
@@ -51,6 +52,11 @@ function orderStatusPayload(nextProducts) {
   return {
     disabledOrderCodes: nextProducts
       .filter((product) => !product.active || product.soldOut)
+      .map((product) => Number(product.orderCode))
+      .filter((code) => Number.isSafeInteger(code) && code >= 1 && code <= 9999)
+      .sort((left, right) => left - right),
+    toppingAllowedOrderCodes: nextProducts
+      .filter((product) => product.toppingAllowed)
       .map((product) => Number(product.orderCode))
       .filter((code) => Number.isSafeInteger(code) && code >= 1 && code <= 9999)
       .sort((left, right) => left - right),
@@ -74,6 +80,7 @@ function clearEditor() {
   els.colorCode.value = "1";
   els.active.checked = true;
   els.voucherEligible.checked = true;
+  els.toppingAllowed.checked = false;
   els.editorTitle.textContent = "商品を登録";
 }
 
@@ -100,6 +107,7 @@ function productPayload(existing) {
     active: els.active.checked,
     soldOut: els.soldOut.checked,
     voucherEligible: els.voucherEligible.checked,
+    toppingAllowed: els.toppingAllowed.checked,
     colorCode,
     orderCode,
     createdAt: existing?.createdAt ?? now,
@@ -169,6 +177,7 @@ function csvRecord(headers, row) {
     active: csvBoolean(data.active || data["販売対象"], true),
     soldOut: csvBoolean(data.soldOut || data["売切"], false),
     voucherEligible: csvBoolean(data.voucherEligible || data["引換券利用可"], true),
+    toppingAllowed: csvBoolean(data.toppingAllowed || data["トッピング選択可"], false),
     colorCode,
     orderCode
   };
@@ -240,7 +249,8 @@ function renderProducts() {
     badges.append(
       badge(product.active ? "販売対象" : "停止", product.active ? "" : "neutral"),
       badge(product.soldOut ? "売切" : "在庫あり", product.soldOut ? "warn" : ""),
-      badge(product.voucherEligible ? "引換券可" : "引換券不可", product.voucherEligible ? "" : "neutral")
+      badge(product.voucherEligible ? "引換券可" : "引換券不可", product.voucherEligible ? "" : "neutral"),
+      badge(product.toppingAllowed ? "トッピング可" : "トッピングなし", product.toppingAllowed ? "" : "neutral")
     );
     fragment.querySelector(".edit-button").addEventListener("click", () => {
       els.productId.value = product.id;
@@ -253,6 +263,7 @@ function renderProducts() {
       els.active.checked = product.active;
       els.soldOut.checked = product.soldOut;
       els.voucherEligible.checked = product.voucherEligible;
+      els.toppingAllowed.checked = product.toppingAllowed ?? false;
       els.editorTitle.textContent = `「${product.name}」を編集`;
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -296,9 +307,9 @@ els.reset.addEventListener("click", clearEditor);
 els.filter.addEventListener("input", renderProducts);
 els.downloadTemplate.addEventListener("click", () => {
   const csv = [
-    "id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible",
-    ",焼きそば,500,フード,10,1,1,true,false,true",
-    ",フランクフルト,300,フード,20,2,4,true,false,true"
+    "id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed",
+    ",焼きそば,500,フード,10,1,1,true,false,true,false",
+    ",フランクフルト,300,フード,20,2,4,true,false,true,false"
   ].join("\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
@@ -312,7 +323,7 @@ els.exportProducts.addEventListener("click", () => {
     const text = String(value ?? "");
     return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   };
-  const header = ["id", "name", "priceYen", "category", "sortOrder", "orderCode", "colorCode", "active", "soldOut", "voucherEligible"];
+  const header = ["id", "name", "priceYen", "category", "sortOrder", "orderCode", "colorCode", "active", "soldOut", "voucherEligible", "toppingAllowed"];
   const rows = products.map((product) => header.map((key) => escapeCell(product[key])).join(","));
   const url = URL.createObjectURL(new Blob(["\uFEFF", [header.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
