@@ -16,15 +16,15 @@
       <div class="header-actions">
         <span id="connection-status" class="connection">接続確認中</span>
         <button id="demo-button" class="button secondary" type="button">デモ注文</button>
-        <button id="login-button" class="button primary" type="button">Googleでログイン</button>
-        <button id="logout-button" class="button secondary" type="button" hidden>ログアウト</button>
       </div>
     </header>
 
     <main>
-      <section id="login-message" class="login-message panel">
-        <h2>KDSへログイン</h2>
-        <p>Googleログインすると、Firestoreに同期済みの売上をキッチン表示できます。</p>
+      <section id="pin-lock" class="login-message panel">
+        <h2>KDSを開始</h2>
+        <p>厨房用PINを入力してください。</p>
+        <div class="pin-row"><input id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off" autofocus /><button id="unlock-button" class="button primary" type="button">表示を開始</button></div>
+        <p id="pin-error" class="notice"></p>
       </section>
 
       <section id="kds-app" hidden>
@@ -51,6 +51,6 @@
       </article>
     </template>
 
-    <script type="module" src="app.js"></script>
+    <script type="module" src="app-v2.js"></script>
   </body>
 </html>
