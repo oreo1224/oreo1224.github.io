@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14213d" />
+    <title>電子ジャーナル | 学園祭POS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div><p class="eyebrow">FESTIVAL POS</p><h1>売上・電子ジャーナル</h1></div>
+      <div class="account"><span id="account-name">ログインしていません</span><button id="login-button" class="button primary">Googleでログイン</button><button id="logout-button" class="button secondary" hidden>ログアウト</button></div>
+    </header>
+    <main id="journal-app" hidden>
+      <section class="filters panel"><label>端末<select id="terminal-filter"><option value="ALL">全端末</option></select></label><label>表示<input id="search" type="search" placeholder="伝票番号・商品名で検索" /></label></section>
+      <section class="summary-grid"><article class="summary-card"><p>純売上</p><strong id="net-sales">¥0</strong></article><article class="summary-card"><p>現金売上</p><strong id="cash-sales">¥0</strong></article><article class="summary-card"><p>カード売上</p><strong id="credit-sales">¥0</strong></article><article class="summary-card"><p>引換券</p><strong id="voucher-count">0枚</strong></article></section>
+      <section class="panel chart-panel"><div class="section-heading"><div><h2>日別売上</h2><p>表示中の伝票から集計</p></div></div><div id="sales-chart" class="sales-chart"></div></section>
+      <section class="journal-layout"><section class="panel journal-panel"><div class="section-heading"><div><h2>電子ジャーナル</h2><p id="journal-count">読み込み中…</p></div></div><p id="notice" class="notice"></p><div id="journal-list" class="journal-list"></div></section><aside class="panel receipt-panel"><h2>伝票内容</h2><p id="receipt-empty" class="muted">左の伝票を選択すると、レシートと同じ内容を表示します。</p><pre id="receipt-text" hidden></pre></aside></section>
+    </main>
+    <section id="login-message" class="login-message panel"><h2>管理画面へログイン</h2><p>指定されたGoogleアカウントだけが、売上と電子ジャーナルを確認できます。</p></section>
+    <template id="journal-template"><button class="journal-row"><div><strong class="journal-title"></strong><p class="journal-meta"></p></div><strong class="journal-amount"></strong></button></template>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
