@@ -45,6 +45,10 @@
             </label>
           </div>
           <label>
+            注文QR用 商品コード（1〜9999、重複不可）
+            <input id="order-code" required type="number" min="1" max="9999" step="1" placeholder="例：1" />
+          </label>
+          <label>
             カテゴリ
             <input id="category" maxlength="40" autocomplete="off" placeholder="例：フード" />
           </label>
@@ -84,7 +88,7 @@
         <div class="csv-tools">
           <div>
             <h3>CSV一括登録</h3>
-            <p><code>id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
+            <p><code>id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
           </div>
           <div class="csv-actions">
             <button id="download-template-button" class="button secondary" type="button">CSV雛形をダウンロード</button>
