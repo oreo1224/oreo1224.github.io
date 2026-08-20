@@ -48,3 +48,16 @@ id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible
 - `active`、`soldOut`、`voucherEligible` は `true/false` または `1/0` を使えます。
 - `colorCode` は商品ボタンの色で、`1`〜`8` を指定します。
 - 一度に登録できるのは200件までです。
+
+## 注文QR画面の商品CSV
+
+`order/` はFirebaseを使わない独立した静的ページです。商品表示は同じフォルダの `order/item.csv` だけを読み込みます。別のGitHub Pagesや任意の静的ホスティングへ移す場合も、`order/` フォルダを丸ごとコピーすれば動作します。
+
+```csv
+id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible
+food-1,焼きそば,500,フード,10,101,1,true,false,true
+```
+
+- `orderCode` はPOS側の商品マスタと同じ、重複しない `1`〜`9999` を設定します。
+- 注文QRは商品コードの並びだけを保持します。CSVの価格は注文画面の表示用であり、実際の会計価格・売切判定はPOSに同期済みの商品マスタが優先されます。
+- `item.csv` の編集後は、公開先へ反映してから注文画面を再読み込みします。

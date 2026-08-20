@@ -1,0 +1,16 @@
+﻿id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible
+QsbCiKzuWZUMmf2TF76L,アイスティー,200,ドリンク,1,1,1,true,false,true
+D4H8aa1cug8IzKTdoNoy,ホットティー,200,ドリンク,2,2,1,true,false,true
+6pI7AtjMgezIjLbqTIuY,アイスコーヒー,200,ドリンク,3,3,1,true,false,true
+Ga37DtTHfRDyzr63Pui8,ホットコーヒー,200,ドリンク,4,4,1,true,false,true
+CBN9rihd2blk02cKHX5I,チャイ,150,ドリンク,5,5,1,true,false,true
+VFnYfilrgUYbFYxDtvns,コーラ,150,ドリンク,6,6,1,true,false,true
+aMJuY3ylwzp1FPkH5zfn,リンゴジュース,150,ドリンク,7,7,1,true,false,true
+TONhJQrGZsx7KHCSSj8y,ミルクティー,150,ドリンク,8,8,1,true,false,true
+JMIRG5aqOsuMgPRmzh6d,ココナッツミルク,250,ドリンク,9,9,1,true,false,true
+0zlabA2xmQ9INfQC9nlY,スムージー,999,ドリンク,10,10,1,true,false,true
+p8di1IoZrMX8XoQYSZ95,タピオカ,150,トッピング,11,11,2,true,false,true
+bJjLRNJW3Bq9oYTmCUyU,タコス,500,フード,12,12,3,true,false,true
+lG4j8K5qlVm9kvjA6sGp,ピザ風ブリトー,500,フード,13,13,3,true,false,true
+0jH3q6IX2iHb474bQM0h,ハムチーズブリトー,400,フード,14,14,3,true,false,true
+pMektJF1MJIpeg50iGmb,チョコバナナ・デザートトルティーヤ,500,フード,15,15,3,true,false,true
