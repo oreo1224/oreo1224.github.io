@@ -7,13 +7,10 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {
-  addDoc,
   collection,
-  deleteDoc,
   doc,
   getFirestore,
   onSnapshot,
-  updateDoc,
   writeBatch
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { adminEmail, firebaseConfig } from "./firebase-config.js";
@@ -49,6 +46,21 @@ const els = {
 
 let products = [];
 let unsubscribeProducts = null;
+
+function orderStatusPayload(nextProducts) {
+  return {
+    disabledOrderCodes: nextProducts
+      .filter((product) => !product.active || product.soldOut)
+      .map((product) => Number(product.orderCode))
+      .filter((code) => Number.isSafeInteger(code) && code >= 1 && code <= 9999)
+      .sort((left, right) => left - right),
+    updatedAt: Date.now()
+  };
+}
+
+function orderStatusRef() {
+  return doc(db, "order_menu_status", "current");
+}
 
 function showNotice(message = "") {
   els.notice.textContent = message;
@@ -173,6 +185,7 @@ async function importCsv(file) {
   if (records.length > 200) throw new Error("一度に登録できるのは200件までです。");
   const batch = writeBatch(db);
   const existingById = new Map(products.map((product) => [product.id, product]));
+  const nextProducts = [...products];
   const now = Date.now();
   let created = 0;
   let updated = 0;
@@ -185,9 +198,14 @@ async function importCsv(file) {
       createdAt: existing?.createdAt ?? now,
       updatedAt: now
     });
+    const nextProduct = { id: reference.id, ...product, createdAt: existing?.createdAt ?? now, updatedAt: now };
+    const nextIndex = nextProducts.findIndex((item) => item.id === reference.id);
+    if (nextIndex >= 0) nextProducts[nextIndex] = nextProduct;
+    else nextProducts.push(nextProduct);
     if (existing) updated += 1;
     else created += 1;
   }
+  batch.set(orderStatusRef(), orderStatusPayload(nextProducts));
   await batch.commit();
   return { created, updated };
 }
@@ -241,7 +259,10 @@ function renderProducts() {
     fragment.querySelector(".delete-button").addEventListener("click", async () => {
       if (!window.confirm(`「${product.name}」を削除しますか？\nこの操作は取り消せません。`)) return;
       try {
-        await deleteDoc(doc(db, "products", product.id));
+        const batch = writeBatch(db);
+        batch.delete(doc(db, "products", product.id));
+        batch.set(orderStatusRef(), orderStatusPayload(products.filter((item) => item.id !== product.id)));
+        await batch.commit();
         showNotice("");
         clearEditor();
       } catch (error) {
@@ -320,8 +341,15 @@ els.form.addEventListener("submit", async (event) => {
   const existing = products.find((product) => product.id === id);
   try {
     const payload = productPayload(existing);
-    if (id) await updateDoc(doc(db, "products", id), payload);
-    else await addDoc(collection(db, "products"), payload);
+    const reference = id ? doc(db, "products", id) : doc(collection(db, "products"));
+    const nextProduct = { id: reference.id, ...payload };
+    const nextProducts = existing
+      ? products.map((product) => product.id === existing.id ? nextProduct : product)
+      : [...products, nextProduct];
+    const batch = writeBatch(db);
+    batch.set(reference, payload);
+    batch.set(orderStatusRef(), orderStatusPayload(nextProducts));
+    await batch.commit();
     showNotice("");
     clearEditor();
   } catch (error) {

@@ -48,3 +48,9 @@ id,name,priceYen,category,sortOrder,colorCode,active,soldOut,voucherEligible
 - `active`、`soldOut`、`voucherEligible` は `true/false` または `1/0` を使えます。
 - `colorCode` は商品ボタンの色で、`1`〜`8` を指定します。
 - 一度に登録できるのは200件までです。
+
+## 注文QR画面の売切状態
+
+注文QR画面は同フォルダの`order/item.csv`から商品名・価格・カテゴリ・商品コードを読みます。一方、CSVの`active`・`soldOut`は売切判定に使いません。Firestoreの`order_menu_status/current`をページ表示時に1回だけ取得し、`disabledOrderCodes`に含まれる商品コードを売切・販売停止として選択不可にします。
+
+商品マスタ画面で商品を保存・CSV一括登録・削除すると、各`products/{id}`の変更と`order_menu_status/current`の更新を同じバッチで確定します。初回だけ、商品マスタ画面でいずれかの商品を保存して売切状態ドキュメントを作成してください。
