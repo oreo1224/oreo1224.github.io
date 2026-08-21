@@ -8,9 +8,13 @@ const calling = document.querySelector("#calling-numbers");
 const connection = document.querySelector("#connection");
 const voiceButton = document.querySelector("#voice-toggle");
 
+const ANNOUNCEMENT_WAIT_MS = 1000;
+
 let voiceEnabled = false;
 let initialSnapshotReceived = false;
 let previousCallingIds = new Set();
+let pendingNumbers = new Set();
+let announcementTimer = null;
 
 function render(target, records, emptyText) {
   target.replaceChildren();
@@ -36,11 +40,12 @@ function getJapaneseVoice() {
     ?? null;
 }
 
-function speakNumber(exchangeNumber) {
-  if (!voiceEnabled || !("speechSynthesis" in window)) return;
+function speakNumbers(exchangeNumbers) {
+  if (!voiceEnabled || !("speechSynthesis" in window) || !exchangeNumbers.length) return;
 
+  const numberText = exchangeNumbers.map((number) => `${number}番`).join("、");
   const utterance = new SpeechSynthesisUtterance(
-    `番号 ${exchangeNumber}番のお客様、お待たせいたしました。商品をお受け取りください。`
+    `${numberText}のお客様、お待たせいたしました。商品をお受け取りください。`
   );
   utterance.lang = "ja-JP";
   utterance.rate = 0.9;
@@ -51,6 +56,30 @@ function speakNumber(exchangeNumber) {
   if (voice) utterance.voice = voice;
 
   window.speechSynthesis.speak(utterance);
+}
+
+function flushPendingAnnouncements() {
+  announcementTimer = null;
+  const numbers = [...pendingNumbers];
+  pendingNumbers.clear();
+  speakNumbers(numbers);
+}
+
+function queueAnnouncement(exchangeNumber) {
+  if (!voiceEnabled) return;
+
+  pendingNumbers.add(String(exchangeNumber));
+  if (announcementTimer !== null) return;
+
+  announcementTimer = window.setTimeout(flushPendingAnnouncements, ANNOUNCEMENT_WAIT_MS);
+}
+
+function clearPendingAnnouncements() {
+  pendingNumbers.clear();
+  if (announcementTimer !== null) {
+    window.clearTimeout(announcementTimer);
+    announcementTimer = null;
+  }
 }
 
 function updateVoiceButton() {
@@ -68,6 +97,7 @@ voiceButton.addEventListener("click", () => {
 
   voiceEnabled = !voiceEnabled;
   window.speechSynthesis.cancel();
+  clearPendingAnnouncements();
   updateVoiceButton();
 
   if (voiceEnabled) {
@@ -95,7 +125,7 @@ onSnapshot(query(collection(db, "kds_display"), orderBy("confirmedAt", "asc"), l
   if (initialSnapshotReceived) {
     callingRecords
       .filter((record) => !previousCallingIds.has(record.id))
-      .forEach((record) => speakNumber(record.exchangeNumber));
+      .forEach((record) => queueAnnouncement(record.exchangeNumber));
   } else {
     initialSnapshotReceived = true;
   }
