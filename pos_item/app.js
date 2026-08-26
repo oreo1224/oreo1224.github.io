@@ -334,7 +334,13 @@ els.exportProducts.addEventListener("click", () => {
     return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   };
   const header = ["id", "name", "priceYen", "category", "menuCategory", "sortOrder", "orderCode", "colorCode", "active", "soldOut", "voucherEligible", "toppingAllowed", "useKDS"];
-  const rows = products.map((product) => header.map((key) => escapeCell(product[key])).join(","));
+  const rows = products.map((product) => header.map((key) => {
+    // 追加前のFirestore商品も、CSVに出した時点で新しい列を明示的に埋める。
+    const value = key === "menuCategory" ? (product.menuCategory ?? 1)
+      : key === "useKDS" ? (product.useKDS ?? true)
+        : product[key];
+    return escapeCell(value);
+  }).join(","));
   const url = URL.createObjectURL(new Blob(["\uFEFF", [header.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
