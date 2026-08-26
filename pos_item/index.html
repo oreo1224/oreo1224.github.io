@@ -53,6 +53,10 @@
             <input id="category" maxlength="40" autocomplete="off" placeholder="例：フード" />
           </label>
           <label>
+            メニューセット（1〜9）
+            <input id="menu-category" required type="number" min="1" max="9" step="1" value="1" />
+          </label>
+          <label>
             商品ボタン色
             <select id="color-code">
               <option value="1">1：水色</option>
@@ -89,7 +93,7 @@
         <div class="csv-tools">
           <div>
             <h3>CSV一括登録</h3>
-            <p><code>id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
+            <p><code>id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed</code> の順で読み込みます。<code>id</code>が空なら新規登録、既存IDなら更新です。</p>
           </div>
           <div class="csv-actions">
             <button id="download-template-button" class="button secondary" type="button">CSV雛形をダウンロード</button>

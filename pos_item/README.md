@@ -40,14 +40,15 @@ POS側の商品マスタ取得・売上登録画面は次の実装対象です�
 画面上の「CSV雛形をダウンロード」から雛形を取得できます。「登録済みをCSV出力」は既存商品を編集可能なCSVとして出力します。UTF-8（BOM付き）のCSVを想定し、次のヘッダーを使います。
 
 ```csv
-id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed
-,焼きそば,500,フード,10,1,1,true,false,true,false
+id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed
+,焼きそば,500,フード,1,10,1,1,true,false,true,false
 ```
 
 - `id` が空の行は新規登録です。
 - 既存のFirestoreドキュメントIDを `id` に入れた行は更新です。
 - `active`、`soldOut`、`voucherEligible`、`toppingAllowed` は `true/false` または `1/0` を使えます。
 - `colorCode` は商品ボタンの色で、`1`〜`8` を指定します。
+- `menuCategory` はPOSで表示するメニューセットで、`1`〜`9` を指定します。各レジで複数セットを選択できます。
 - `toppingAllowed` が有効な商品では、注文QR画面でトッピング選択画面を開きます。
 - 一度に登録できるのは200件までです。
 
