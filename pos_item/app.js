@@ -35,6 +35,7 @@ const els = {
   soldOut: document.querySelector("#sold-out"),
   voucherEligible: document.querySelector("#voucher-eligible"),
   toppingAllowed: document.querySelector("#topping-allowed"),
+  useKds: document.querySelector("#use-kds"),
   reset: document.querySelector("#reset-button"),
   filter: document.querySelector("#filter"),
   csvFile: document.querySelector("#csv-file"),
@@ -78,6 +79,7 @@ function clearEditor() {
   els.active.checked = true;
   els.voucherEligible.checked = true;
   els.toppingAllowed.checked = false;
+  els.useKds.checked = true;
   els.editorTitle.textContent = "商品を登録";
 }
 
@@ -108,6 +110,7 @@ function productPayload(existing) {
     soldOut: els.soldOut.checked,
     voucherEligible: els.voucherEligible.checked,
     toppingAllowed: els.toppingAllowed.checked,
+    useKDS: els.useKds.checked,
     colorCode,
     orderCode,
     createdAt: existing?.createdAt ?? now,
@@ -181,6 +184,7 @@ function csvRecord(headers, row) {
     soldOut: csvBoolean(data.soldOut || data["売切"], false),
     voucherEligible: csvBoolean(data.voucherEligible || data["引換券利用可"], true),
     toppingAllowed: csvBoolean(data.toppingAllowed || data["トッピング選択可"], false),
+    useKDS: csvBoolean(data.useKDS || data.useKds || data["Web KDSへ送信"], true),
     colorCode,
     orderCode
   };
@@ -253,7 +257,8 @@ function renderProducts() {
       badge(product.active ? "販売対象" : "停止", product.active ? "" : "neutral"),
       badge(product.soldOut ? "売切" : "在庫あり", product.soldOut ? "warn" : ""),
       badge(product.voucherEligible ? "引換券可" : "引換券不可", product.voucherEligible ? "" : "neutral"),
-      badge(product.toppingAllowed ? "トッピング可" : "トッピングなし", product.toppingAllowed ? "" : "neutral")
+      badge(product.toppingAllowed ? "トッピング可" : "トッピングなし", product.toppingAllowed ? "" : "neutral"),
+      badge(product.useKDS ?? true ? "KDS送信" : "KDS送信なし", product.useKDS ?? true ? "" : "neutral")
     );
     fragment.querySelector(".edit-button").addEventListener("click", () => {
       els.productId.value = product.id;
@@ -268,6 +273,7 @@ function renderProducts() {
       els.soldOut.checked = product.soldOut;
       els.voucherEligible.checked = product.voucherEligible;
       els.toppingAllowed.checked = product.toppingAllowed ?? false;
+      els.useKds.checked = product.useKDS ?? true;
       els.editorTitle.textContent = `「${product.name}」を編集`;
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -311,9 +317,9 @@ els.reset.addEventListener("click", clearEditor);
 els.filter.addEventListener("input", renderProducts);
 els.downloadTemplate.addEventListener("click", () => {
   const csv = [
-    "id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed",
-    ",焼きそば,500,フード,1,10,1,1,true,false,true,false",
-    ",フランクフルト,300,フード,1,20,2,4,true,false,true,false"
+    "id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed,useKDS",
+    ",焼きそば,500,フード,1,10,1,1,true,false,true,false,true",
+    ",フランクフルト,300,フード,1,20,2,4,true,false,true,false,true"
   ].join("\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
@@ -327,7 +333,7 @@ els.exportProducts.addEventListener("click", () => {
     const text = String(value ?? "");
     return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
   };
-  const header = ["id", "name", "priceYen", "category", "menuCategory", "sortOrder", "orderCode", "colorCode", "active", "soldOut", "voucherEligible", "toppingAllowed"];
+  const header = ["id", "name", "priceYen", "category", "menuCategory", "sortOrder", "orderCode", "colorCode", "active", "soldOut", "voucherEligible", "toppingAllowed", "useKDS"];
   const rows = products.map((product) => header.map((key) => escapeCell(product[key])).join(","));
   const url = URL.createObjectURL(new Blob(["\uFEFF", [header.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");

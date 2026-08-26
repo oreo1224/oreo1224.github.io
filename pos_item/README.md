@@ -28,7 +28,10 @@ products/{auto-id}
 ├ soldOut: bool
 ├ voucherEligible: bool
 ├ toppingAllowed: bool
+├ useKDS: bool
 ├ colorCode: int (1〜8)
+├ menuCategory: int (1〜9)
+├ orderCode: int (1〜9999)
 ├ createdAt: int
 └ updatedAt: int
 ```
@@ -40,20 +43,29 @@ POS側の商品マスタ取得・売上登録画面は次の実装対象です�
 画面上の「CSV雛形をダウンロード」から雛形を取得できます。「登録済みをCSV出力」は既存商品を編集可能なCSVとして出力します。UTF-8（BOM付き）のCSVを想定し、次のヘッダーを使います。
 
 ```csv
-id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed
-,焼きそば,500,フード,1,10,1,1,true,false,true,false
+id,name,priceYen,category,menuCategory,sortOrder,orderCode,colorCode,active,soldOut,voucherEligible,toppingAllowed,useKDS
+,焼きそば,500,フード,1,10,1,1,true,false,true,false,true
 ```
 
 - `id` が空の行は新規登録です。
 - 既存のFirestoreドキュメントIDを `id` に入れた行は更新です。
-- `active`、`soldOut`、`voucherEligible`、`toppingAllowed` は `true/false` または `1/0` を使えます。
+- `active`、`soldOut`、`voucherEligible`、`toppingAllowed`、`useKDS` は `true/false` または `1/0` を使えます。
 - `colorCode` は商品ボタンの色で、`1`〜`8` を指定します。
 - `menuCategory` はPOSで表示するメニューセットで、`1`〜`9` を指定します。各レジで複数セットを選択できます。
 - `toppingAllowed` が有効な商品では、注文QR画面でトッピング選択画面を開きます。
+- `useKDS` が有効な商品だけ、売上確定後にWeb KDSへ調理指示を送ります。物販商品は通常 `false` にします。
 - 一度に登録できるのは200件までです。
 
 ## 注文QR画面の売切状態
 
-注文QR画面は同フォルダの`order/item.csv`から商品名・価格・カテゴリ・商品コード・販売対象・トッピング選択可を読みます。Firestoreの`order_menu_status/current`はページ表示時に1回だけ取得し、`disabledOrderCodes`に含まれる商品コードだけを売切・販売停止として選択不可にします。
+注文QR画面は同フォルダの`order/item.csv`から商品名・価格・カテゴリ・メニューセット・商品コード・販売対象・トッピング選択可を読みます。Firestoreの`order_menu_status/current`はページ表示時に1回だけ取得し、`disabledOrderCodes`に含まれる商品コードだけを売切・販売停止として選択不可にします。
+
+QR注文画面はURLで表示セットを絞り込めます。次の3形式を受け付けます。指定なしでは全セットを表示します。
+
+```text
+/pos_item/order/?1&2
+/pos_item/order/?sets=1,2
+/pos_item/order/?set=1&set=2
+```
 
 商品マスタ画面で商品を保存・CSV一括登録・削除すると、各`products/{id}`の変更と`order_menu_status/current`の更新を同じバッチで確定します。初回だけ、商品マスタ画面でいずれかの商品を保存して売切状態ドキュメントを作成してください。
