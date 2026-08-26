@@ -55,11 +55,6 @@ function orderStatusPayload(nextProducts) {
       .map((product) => Number(product.orderCode))
       .filter((code) => Number.isSafeInteger(code) && code >= 1 && code <= 9999)
       .sort((left, right) => left - right),
-    toppingAllowedOrderCodes: nextProducts
-      .filter((product) => product.toppingAllowed)
-      .map((product) => Number(product.orderCode))
-      .filter((code) => Number.isSafeInteger(code) && code >= 1 && code <= 9999)
-      .sort((left, right) => left - right),
     updatedAt: Date.now()
   };
 }

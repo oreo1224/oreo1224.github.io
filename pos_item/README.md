@@ -53,6 +53,6 @@ id,name,priceYen,category,sortOrder,orderCode,colorCode,active,soldOut,voucherEl
 
 ## 注文QR画面の売切状態
 
-注文QR画面は同フォルダの`order/item.csv`から商品名・価格・カテゴリ・商品コードを読みます。一方、CSVの`active`・`soldOut`・`toppingAllowed`は注文画面の判定に使いません。Firestoreの`order_menu_status/current`をページ表示時に1回だけ取得し、`disabledOrderCodes`に含まれる商品コードを売切・販売停止として選択不可に、`toppingAllowedOrderCodes`に含まれる商品コードをトッピング選択可として扱います。
+注文QR画面は同フォルダの`order/item.csv`から商品名・価格・カテゴリ・商品コード・販売対象・トッピング選択可を読みます。Firestoreの`order_menu_status/current`はページ表示時に1回だけ取得し、`disabledOrderCodes`に含まれる商品コードだけを売切・販売停止として選択不可にします。
 
 商品マスタ画面で商品を保存・CSV一括登録・削除すると、各`products/{id}`の変更と`order_menu_status/current`の更新を同じバッチで確定します。初回だけ、商品マスタ画面でいずれかの商品を保存して売切状態ドキュメントを作成してください。
