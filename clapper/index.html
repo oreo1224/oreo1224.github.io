@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#101113">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Digital Clapper</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f7f4ed;
+      --muted: #a7a9ad;
+      --line: rgba(255, 255, 255, .16);
+      --panel: #181a1e;
+      --accent: #ffcf32;
+      --red: #ff5a52;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      background: #090a0c;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100dvh;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 207, 50, .12), transparent 36rem),
+        #090a0c;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(100%, 1100px);
+      display: grid;
+      gap: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 52px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .brand::before {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 18px rgba(255, 90, 82, .7);
+      content: "";
+    }
+
+    .toolbar-actions { display: flex; gap: 8px; }
+
+    .icon-button, .action-button {
+      min-width: 52px;
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .06);
+      color: var(--ink);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .icon-button:active, .action-button:active { transform: scale(.97); }
+
+    .slate {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, .45);
+    }
+
+    .clap-zone {
+      position: relative;
+      z-index: 3;
+      height: clamp(72px, 10vw, 106px);
+      cursor: pointer;
+      touch-action: manipulation;
+      perspective: 700px;
+    }
+
+    .clap-bar {
+      position: absolute;
+      inset: 0;
+      transform-origin: left bottom;
+      border-bottom: 7px solid #08090b;
+      background:
+        repeating-linear-gradient(135deg, #f4f0e5 0 12%, #f4f0e5 12% 17%, #111216 17% 29%, #111216 29% 34%);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .4);
+      transition: transform 150ms cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .clap-zone.open .clap-bar { transform: rotate(-13deg) translateY(-6px); }
+    .clap-zone.clapping .clap-bar { animation: clap 260ms ease-out; }
+
+    @keyframes clap {
+      0% { transform: rotate(-13deg) translateY(-6px); }
+      55% { transform: rotate(0); }
+      68% { transform: rotate(-2deg); }
+      100% { transform: rotate(0); }
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr;
+      min-height: clamp(410px, calc(100dvh - 270px), 570px);
+    }
+
+    .identity {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: clamp(24px, 4vw, 52px);
+      border-right: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: clamp(11px, 1.4vw, 14px);
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .project-input {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: clamp(32px, 5vw, 66px);
+      font-weight: 900;
+      letter-spacing: -.05em;
+      line-height: .95;
+      text-transform: uppercase;
+    }
+
+    .project-input::placeholder { color: rgba(247, 244, 237, .22); }
+
+    .director {
+      align-self: end;
+      display: grid;
+      gap: 6px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .line-input {
+      width: 100%;
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: clamp(16px, 2vw, 23px);
+      font-weight: 650;
+    }
+
+    .details {
+      display: grid;
+      grid-template-rows: 1fr auto;
+    }
+
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .number-field {
+      position: relative;
+      display: grid;
+      align-content: center;
+      padding: clamp(18px, 3vw, 34px);
+      text-align: center;
+    }
+
+    .number-field + .number-field { border-left: 1px solid var(--line); }
+
+    .number-input {
+      width: 100%;
+      min-width: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: clamp(46px, 8vw, 104px);
+      font-weight: 800;
+      letter-spacing: -.08em;
+      line-height: 1;
+      text-align: center;
+    }
+
+    .number-input::placeholder { color: rgba(247, 244, 237, .16); }
+
+    .number-field .label {
+      position: absolute;
+      top: 18px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+    }
+
+    .clock-panel {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      padding: clamp(22px, 3vw, 36px);
+    }
+
+    .timecode {
+      font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      font-size: clamp(31px, 5.7vw, 72px);
+      font-weight: 650;
+      letter-spacing: -.07em;
+      line-height: 1;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .date {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: clamp(12px, 1.7vw, 17px);
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .fps {
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      font: 750 12px/1 ui-monospace, "SFMono-Regular", monospace;
+      letter-spacing: .08em;
+    }
+
+    .bottom-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+    }
+
+    .hint {
+      align-self: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .action-button {
+      min-width: 190px;
+      padding: 0 24px;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #111216;
+      font-weight: 850;
+      letter-spacing: .04em;
+    }
+
+    .flash {
+      pointer-events: none;
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      background: #fff;
+      opacity: 0;
+    }
+
+    .flash.active { animation: flash 180ms ease-out; }
+    @keyframes flash { 0% { opacity: .65; } 100% { opacity: 0; } }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    @media (orientation: portrait), (max-width: 760px) {
+      .app { width: min(100%, 720px); }
+      .main { grid-template-columns: 1fr; min-height: 0; }
+      .identity { min-height: 260px; border-right: 0; border-bottom: 1px solid var(--line); }
+      .numbers { min-height: 230px; }
+      .clock-panel { min-height: 150px; }
+      .project-input { font-size: clamp(38px, 9vw, 68px); }
+      .number-input { font-size: clamp(48px, 13vw, 90px); }
+      .timecode { font-size: clamp(34px, 9vw, 64px); }
+    }
+
+    @media (max-width: 520px) {
+      body { padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left)); }
+      .brand { font-size: 11px; }
+      .slate { border-radius: 17px; }
+      .identity { min-height: 220px; padding: 25px; }
+      .numbers { min-height: 190px; }
+      .number-field { padding: 16px 8px; }
+      .clock-panel { grid-template-columns: 1fr; gap: 12px; }
+      .fps { justify-self: start; }
+      .bottom-bar { grid-template-columns: 1fr; }
+      .hint { display: none; }
+      .action-button { width: 100%; min-height: 58px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="toolbar">
+      <div class="brand">Digital Clapper</div>
+      <div class="toolbar-actions">
+        <button class="icon-button" id="soundButton" type="button" aria-label="クラップ音を切り替える" title="クラップ音">🔊</button>
+        <button class="icon-button" id="fullscreenButton" type="button" aria-label="全画面表示にする" title="全画面表示">⛶</button>
+      </div>
+    </header>
+
+    <section class="slate" aria-label="デジタルカチンコ">
+      <div class="clap-zone open" id="clapZone" role="button" tabindex="0" aria-label="カチンコを鳴らす">
+        <div class="clap-bar"></div>
+      </div>
+
+      <div class="main">
+        <section class="identity">
+          <div>
+            <p class="eyebrow">Production</p>
+            <input class="project-input persist" id="project" type="text" placeholder="TITLE" aria-label="作品名" autocomplete="off">
+          </div>
+          <div></div>
+          <div class="director">
+            <label class="label" for="director">Director / Camera</label>
+            <input class="line-input persist" id="director" type="text" placeholder="Your name" autocomplete="off">
+          </div>
+        </section>
+
+        <section class="details">
+          <div class="numbers">
+            <label class="number-field">
+              <span class="label">Scene</span>
+              <input class="number-input persist" id="scene" type="text" inputmode="numeric" placeholder="01" aria-label="シーン番号" autocomplete="off">
+            </label>
+            <label class="number-field">
+              <span class="label">Cut</span>
+              <input class="number-input persist" id="cut" type="text" inputmode="numeric" placeholder="01" aria-label="カット番号" autocomplete="off">
+            </label>
+            <label class="number-field">
+              <span class="label">Take</span>
+              <input class="number-input persist" id="take" type="text" inputmode="numeric" value="1" aria-label="テイク番号" autocomplete="off">
+            </label>
+          </div>
+
+          <div class="clock-panel">
+            <div>
+              <div class="timecode" id="timecode" aria-label="現在時刻">00:00:00:00</div>
+              <div class="date" id="date">----</div>
+            </div>
+            <div class="fps">30 FPS</div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div class="bottom-bar">
+      <div class="hint">上のバーをタップ、またはスペースキーでクラップ</div>
+      <button class="action-button" id="nextTakeButton" type="button">CLAP &amp; NEXT TAKE</button>
+    </div>
+  </main>
+  <div class="flash" id="flash"></div>
+
+  <script>
+    const STORAGE_KEY = 'digital-clapper-v1';
+    const fields = [...document.querySelectorAll('.persist')];
+    const clapZone = document.querySelector('#clapZone');
+    const nextTakeButton = document.querySelector('#nextTakeButton');
+    const soundButton = document.querySelector('#soundButton');
+    const fullscreenButton = document.querySelector('#fullscreenButton');
+    const flash = document.querySelector('#flash');
+    const timecode = document.querySelector('#timecode');
+    const dateLabel = document.querySelector('#date');
+    let soundEnabled = true;
+    let audioContext;
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        fields.forEach((field) => {
+          if (saved[field.id] !== undefined) field.value = saved[field.id];
+        });
+        soundEnabled = saved.soundEnabled !== false;
+      } catch (_) {}
+      renderSoundButton();
+    }
+
+    function saveState() {
+      const state = Object.fromEntries(fields.map((field) => [field.id, field.value]));
+      state.soundEnabled = soundEnabled;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function renderSoundButton() {
+      soundButton.textContent = soundEnabled ? '🔊' : '🔇';
+      soundButton.setAttribute('aria-pressed', String(soundEnabled));
+    }
+
+    function playClap() {
+      if (!soundEnabled) return;
+      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+      const length = Math.floor(audioContext.sampleRate * .085);
+      const buffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < length; i += 1) {
+        const decay = Math.pow(1 - i / length, 5);
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+      const source = audioContext.createBufferSource();
+      const filter = audioContext.createBiquadFilter();
+      const gain = audioContext.createGain();
+      filter.type = 'highpass';
+      filter.frequency.value = 900;
+      gain.gain.value = .9;
+      source.buffer = buffer;
+      source.connect(filter).connect(gain).connect(audioContext.destination);
+      source.start();
+    }
+
+    function clap({ nextTake = false } = {}) {
+      clapZone.classList.remove('open', 'clapping');
+      void clapZone.offsetWidth;
+      clapZone.classList.add('clapping');
+      flash.classList.remove('active');
+      void flash.offsetWidth;
+      flash.classList.add('active');
+      playClap();
+      navigator.vibrate?.(45);
+
+      window.setTimeout(() => {
+        clapZone.classList.remove('clapping');
+        if (nextTake) {
+          const take = document.querySelector('#take');
+          take.value = String((Number.parseInt(take.value, 10) || 0) + 1);
+          saveState();
+        }
+      }, 280);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const two = (value) => String(value).padStart(2, '0');
+      const frames = Math.floor((now.getMilliseconds() / 1000) * 30);
+      timecode.textContent = `${two(now.getHours())}:${two(now.getMinutes())}:${two(now.getSeconds())}:${two(frames)}`;
+      dateLabel.textContent = new Intl.DateTimeFormat('ja-JP', {
+        year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short'
+      }).format(now);
+      requestAnimationFrame(updateClock);
+    }
+
+    fields.forEach((field) => field.addEventListener('input', saveState));
+    clapZone.addEventListener('click', () => clap());
+    clapZone.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        clap();
+      }
+    });
+    nextTakeButton.addEventListener('click', () => clap({ nextTake: true }));
+    soundButton.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      renderSoundButton();
+      saveState();
+    });
+    fullscreenButton.addEventListener('click', async () => {
+      try {
+        const root = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          const enterFullscreen = root.requestFullscreen || root.webkitRequestFullscreen;
+          await enterFullscreen?.call(root);
+        } else {
+          const exitFullscreen = document.exitFullscreen || document.webkitExitFullscreen;
+          await exitFullscreen?.call(document);
+        }
+      } catch (_) {}
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space' && !event.target.matches('input')) {
+        event.preventDefault();
+        clap();
+      }
+    });
+
+    loadState();
+    updateClock();
+  </script>
+</body>
+</html>
