@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14213d" />
+    <title>売上分析 | 学園祭POS</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div><p class="eyebrow">FESTIVAL POS</p><h1>売上分析</h1></div>
+      <div class="account"><a class="button secondary" href="../journal/">電子ジャーナル</a><span id="account-name">ログインしていません</span><button id="login-button" class="button primary">Googleでログイン</button><button id="logout-button" class="button secondary" hidden>ログアウト</button></div>
+    </header>
+    <main id="analytics-app" hidden>
+      <section class="filters panel">
+        <label>端末<select id="terminal-filter"><option value="ALL">全端末</option></select></label>
+        <label>期間<select id="period-filter"><option value="ALL">読み込み済みすべて</option><option value="TODAY">今日</option><option value="7D">直近7日</option><option value="30D">直近30日</option></select></label>
+        <label class="import-control">POS電子ジャーナルCSV<input id="csv-input" type="file" accept=".csv,text/csv" /></label>
+        <button id="reload-button" class="button primary">Firestoreを再読込</button>
+      </section>
+      <p class="import-help">端末の「電子ジャーナルをエクスポート」から出力したCSVを選ぶと、このブラウザ内だけで集計します。読み込み後はFirestoreへアクセスしません。</p>
+      <p id="notice" class="notice"></p>
+      <section class="summary-grid">
+        <article class="summary-card"><p>純売上</p><strong id="net-sales">¥0</strong><small>売上・修正後新伝・キャンセルを相殺</small></article>
+        <article class="summary-card"><p>会計数</p><strong id="sale-count">0件</strong><small>売上／修正後新伝</small></article>
+        <article class="summary-card"><p>平均会計</p><strong id="average-sale">¥0</strong><small>会計数ベース</small></article>
+        <article class="summary-card"><p>キャンセル額</p><strong id="cancel-sales">¥0</strong><small>取消・修正に伴う取消を含む</small></article>
+      </section>
+      <section class="chart-grid">
+        <article class="panel"><div class="section-heading"><div><h2>日別純売上</h2><p>選択条件の売上を日ごとに集計</p></div></div><div id="daily-chart" class="bar-chart"></div></article>
+        <article class="panel"><div class="section-heading"><div><h2>時間帯別純売上</h2><p>伝票確定時刻で集計</p></div></div><div id="hourly-chart" class="bar-chart hourly"></div></article>
+      </section>
+      <section class="analysis-grid">
+        <article class="panel"><div class="section-heading"><div><h2>商品ランキング</h2><p>売上・取消を数量と金額で相殺</p></div></div><ol id="product-ranking" class="ranking"></ol></article>
+        <article class="panel"><div class="section-heading"><div><h2>決済内訳</h2><p>伝票に記録した支払い方法別の純額</p></div></div><div id="payment-breakdown" class="breakdown"></div></article>
+      </section>
+    </main>
+    <section id="login-message" class="login-message panel"><h2>管理画面へログイン</h2><p>指定されたGoogleアカウントだけが、売上分析を確認できます。</p></section>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
