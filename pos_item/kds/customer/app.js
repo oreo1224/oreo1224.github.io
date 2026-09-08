@@ -1,8 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { collection, getFirestore, limit, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, initializeFirestore, limit, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "../../firebase-config.js";
 
-const db = getFirestore(initializeApp(firebaseConfig));
+const firebaseApp = initializeApp(firebaseConfig);
+// Kitchen KDS と同じく、iPad Safari / 一部 Wi-Fi のストリーミング応答の
+// バッファリングを避け、更新をすぐ受け取れる long-polling を使用する。
+const db = initializeFirestore(firebaseApp, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: false
+});
 const cooking = document.querySelector("#cooking-numbers");
 const calling = document.querySelector("#calling-numbers");
 const connection = document.querySelector("#connection");

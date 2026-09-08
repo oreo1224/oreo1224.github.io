@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { collection, doc, getFirestore, limit, onSnapshot, orderBy, query, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, doc, initializeFirestore, limit, onSnapshot, orderBy, query, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "../firebase-config.js";
 
 const KDS_PIN = "2026";
@@ -17,7 +17,13 @@ const els = {
 };
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
-const db = getFirestore(firebaseApp);
+// iPad Safari と一部の Wi-Fi 機器は WebChannel のストリーミング応答を
+// 数十秒バッファすることがある。KDS は即時性を優先し、応答を変更ごとに
+// 閉じる long-polling を明示的に使用する。
+const db = initializeFirestore(firebaseApp, {
+  experimentalForceLongPolling: true,
+  experimentalAutoDetectLongPolling: false
+});
 let selectedFilter = "ACTIVE";
 let orders = [];
 let productsById = new Map();
