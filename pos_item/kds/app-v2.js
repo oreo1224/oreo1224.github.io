@@ -29,6 +29,8 @@ let orders = [];
 let productsById = new Map();
 let unsubscribeOrders;
 let unsubscribeProducts;
+const renderedCards = new Map();
+let emptyMessage = null;
 
 function isTopping(line) {
   const category = String(productsById.get(line.productId)?.category ?? "");
@@ -91,22 +93,64 @@ function card(order) {
     action.onclick = () => changeState(order.documentNo, state.next, action);
     fragment.querySelector(".order-actions").append(action);
   }
-  return fragment;
+  return root;
 }
+
+function orderRenderKey(order) {
+  return JSON.stringify(order);
+}
+
+function clearRenderedCards() {
+  renderedCards.clear();
+  emptyMessage = null;
+  els.orders.replaceChildren();
+}
+
 function render() {
   renderFilters();
   const counts = Object.keys(states).reduce((all, state) => ({ ...all, [state]: 0 }), {});
   orders.forEach((order) => { counts[order.status] += 1; });
   els.summary.textContent = `調理中 ${counts.COOKING}件　呼び出し中 ${counts.CALLING}件`;
   const visible = orders.filter((order) => selectedFilter === "ACTIVE" ? ["COOKING", "CALLING"].includes(order.status) : order.status === selectedFilter);
-  els.orders.replaceChildren();
-  if (!visible.length) { const empty = document.createElement("p"); empty.className = "empty"; empty.textContent = "表示する注文はありません。"; els.orders.append(empty); }
-  else visible.forEach((order) => els.orders.append(card(order)));
+  const visibleIds = new Set(visible.map((order) => order.documentNo));
+  for (const [documentNo, rendered] of renderedCards) {
+    if (!visibleIds.has(documentNo)) {
+      rendered.root.remove();
+      renderedCards.delete(documentNo);
+    }
+  }
+  if (!visible.length) {
+    if (!emptyMessage) {
+      emptyMessage = document.createElement("p");
+      emptyMessage.className = "empty";
+      emptyMessage.textContent = "表示する注文はありません。";
+      els.orders.append(emptyMessage);
+    }
+    return;
+  }
+  emptyMessage?.remove();
+  emptyMessage = null;
+  visible.forEach((order) => {
+    const renderKey = orderRenderKey(order);
+    let rendered = renderedCards.get(order.documentNo);
+    if (!rendered || rendered.renderKey !== renderKey) {
+      rendered?.root.remove();
+      rendered = { renderKey, root: card(order) };
+      renderedCards.set(order.documentNo, rendered);
+    }
+    // append() は既存ノードを移動するだけなので、カードを作り直さず表示順だけ保てる。
+    els.orders.append(rendered.root);
+  });
 }
 async function connect() {
   els.connection.textContent = "Firebaseを接続中";
   await signInAnonymously(auth);
-  unsubscribeProducts = onSnapshot(collection(db, "products"), (snapshot) => { productsById = new Map(snapshot.docs.map((item) => [item.id, item.data()])); render(); });
+  unsubscribeProducts = onSnapshot(collection(db, "products"), (snapshot) => {
+    productsById = new Map(snapshot.docs.map((item) => [item.id, item.data()]));
+    // カテゴリ変更でトッピングの親子表示が変わり得るため、この時だけ全カードを作り直す。
+    clearRenderedCards();
+    render();
+  });
   unsubscribeOrders = onSnapshot(query(collection(db, "kds_orders"), orderBy("confirmedAt", "desc"), limit(200)), (snapshot) => {
     orders = snapshot.docs.map((item) => normalize(item.data())).sort((a, b) => a.confirmedAt - b.confirmedAt);
     els.connection.textContent = "Firestore 接続中"; els.connection.className = "connection online"; els.notice.textContent = ""; render();
@@ -114,6 +158,7 @@ async function connect() {
 }
 function showDemo() {
   unsubscribeOrders?.(); unsubscribeProducts?.(); productsById = new Map([["top", { category: "トッピング" }]]);
+  clearRenderedCards();
   orders = [normalize({ documentNo: "demo-1", exchangeNumber: "01", terminalId: 401, confirmedAt: Date.now() - 60000, status: "COOKING", lines: [{ productId: "a", productName: "焼きそば", quantity: 1 }, { productId: "top", productName: "大盛り", quantity: 1 }, { productId: "top", productName: "マヨネーズ", quantity: 1 }] }), normalize({ documentNo: "demo-2", exchangeNumber: "02", terminalId: 401, confirmedAt: Date.now() - 30000, status: "CALLING", lines: [{ productId: "b", productName: "フランクフルト", quantity: 2 }] })];
   els.connection.textContent = "デモ表示中"; els.connection.className = "connection"; els.notice.textContent = "デモ注文です。再読み込みすると実データ表示へ戻ります。"; render();
 }
