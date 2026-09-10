@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>TelopStudio 差し込み文書メーカー</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0c0f15;--panel:#131823;--panel2:#181f2c;--raise:#1d2534;
+  --line:#222b3b;--line2:#2c3750;--ink:#e4eaf5;--mut:#8b96ac;--faint:#5a6478;
+  --acc:#4c8dff;--acc2:#8fb6ff;--accbg:rgba(76,141,255,.14);--danger:#ff5e72;
+  --ok:#33ce93;--amber:#f2a93b;--mono:"SFMono-Regular","SF Mono",Consolas,"Roboto Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font:13px/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif}
+button,input,select,textarea{font:inherit}
+button{color:inherit}
+header{height:58px;display:flex;align-items:center;gap:12px;padding:0 18px;background:linear-gradient(180deg,#171e2c,#10151f);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.logo{width:31px;height:31px;border-radius:8px;background:linear-gradient(135deg,#5d9bff,#2b57c9);display:grid;place-items:center;font-weight:900;color:#fff;box-shadow:0 2px 12px rgba(76,141,255,.35)}
+.brand b{font-size:14px;letter-spacing:.03em}.brand small{display:block;color:var(--mut);font-size:10px;letter-spacing:.08em;margin-top:-2px}
+.head-actions{margin-left:auto;display:flex;gap:7px;align-items:center}
+main{max-width:1500px;margin:0 auto;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.card-h{min-height:43px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#171d29,#141a25)}
+.card-h b{font-size:12px;letter-spacing:.08em}.card-h .sub{color:var(--mut);font-size:11px}.card-h .sp{flex:1}
+.card-b{padding:12px}
+.btn{height:30px;padding:0 11px;border-radius:7px;cursor:pointer;white-space:nowrap;border:1px solid var(--line2);background:linear-gradient(180deg,#1d2432,#161c28);display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:#405071;background:linear-gradient(180deg,#252e40,#1a2130)}.btn:active{transform:translateY(1px)}
+.btn.pri{background:linear-gradient(180deg,#4384f5,#2e63d8);border-color:#2e63d8;color:#fff;font-weight:700}.btn.danger{color:#ff8796;border-color:#5a2530;background:transparent}
+.btn.sm{height:26px;padding:0 8px;font-size:11.5px}.btn.icon{width:28px;padding:0}.btn.good{color:#8af0c8;border-color:#225b49}
+input,select,textarea{width:100%;min-width:0;background:#0e131c;border:1px solid var(--line2);color:var(--ink);border-radius:6px;padding:6px 8px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 2px rgba(76,141,255,.16)}
+input[type=checkbox]{width:auto;accent-color:var(--acc)}
+textarea{resize:vertical}.mono{font-family:var(--mono)}
+.settings{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:10px}
+.field label{display:block;color:var(--mut);font-size:11px;margin:0 0 4px}.field small{display:block;color:var(--faint);font-size:10px;margin-top:3px}
+.type-tabs{display:flex;background:#0d1219;border:1px solid var(--line2);padding:3px;border-radius:8px;gap:3px}.type-tabs button{flex:1;border:0;border-radius:6px;background:transparent;color:var(--mut);padding:6px;cursor:pointer;font-weight:700}.type-tabs button.on{background:var(--acc);color:#fff}
+.tools{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.table-wrap{overflow:auto;max-height:calc(100vh - 265px)}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:970px}th,td{border-bottom:1px solid var(--line);padding:5px;vertical-align:middle}th{position:sticky;top:0;z-index:5;background:#171d29;color:var(--mut);font-size:10.5px;letter-spacing:.05em;text-align:left}tr:last-child td{border-bottom:0}tbody tr:hover{background:rgba(255,255,255,.018)}
+td.num{width:74px}td.dur{width:74px}td.lock{width:52px;text-align:center}td.ops{width:104px;white-space:nowrap}.row-index{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;background:#20293a;color:var(--mut);font:10px var(--mono);margin-right:4px}.table-empty{text-align:center;color:var(--mut);padding:38px 15px}
+.side{display:flex;flex-direction:column;gap:14px}.preview{height:375px;resize:none;font:11px/1.45 var(--mono);white-space:pre;tab-size:2}.status{display:flex;gap:8px;align-items:center;color:var(--mut);font-size:11px;margin-top:8px}.dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.help{color:var(--mut);font-size:11.5px;line-height:1.75}.help b{color:var(--ink)}.help code{font-family:var(--mono);color:var(--acc2);background:#0d1219;padding:1px 4px;border-radius:4px}
+.drop{border:1px dashed #405071;border-radius:8px;padding:11px;text-align:center;color:var(--mut);cursor:pointer}.drop.drag{background:var(--accbg);border-color:var(--acc)}
+.bulk{height:135px;font-family:var(--mono);font-size:11.5px}.hint{color:var(--faint);font-size:10.5px;margin-top:6px}
+.toast{position:fixed;right:18px;bottom:18px;background:#202838;border:1px solid #394762;padding:10px 14px;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);pointer-events:none;transition:.18s;z-index:100}.toast.on{opacity:1;transform:none}
+.advanced{display:none}.advanced.on{display:table-cell}
+@media(max-width:1050px){main{grid-template-columns:1fr}.table-wrap{max-height:none}.side{display:grid;grid-template-columns:1fr 1fr}.settings{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){header{padding:0 10px}.brand small{display:none}.head-actions .optional{display:none}main{padding:10px}.settings{grid-template-columns:1fr}.side{display:flex}.card-h{flex-wrap:wrap}.preview{height:270px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">T</div>
+  <div class="brand"><b>TelopStudio 差し込み文書メーカー</b><small>INSERT DATA BUILDER</small></div>
+  <div class="head-actions">
+    <button class="btn optional" id="loadBtn">JSONを読込</button>
+    <button class="btn pri" id="downloadBtn">JSONをダウンロード</button>
+  </div>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <div class="card-h"><b>文書設定</b><span class="sub">TelopStudio レーン読込用 JSON</span></div>
+      <div class="card-b">
+        <div class="settings">
+          <div class="field"><label>レーン種別</label><div class="type-tabs"><button id="nameType" class="on">名前スーパー</button><button id="sideType">サイドスーパー</button></div></div>
+          <div class="field"><label>レーンID</label><input id="laneId" value="tl1" autocomplete="off"><small>例: tl1 / tl2 / 任意ID</small></div>
+          <div class="field"><label>レーン名</label><input id="laneName" value="TL1" autocomplete="off"></div>
+          <div class="field"><label>自動採番 開始番号</label><input id="startNum" type="number" value="101" min="1" step="1"></div>
+        </div>
+        <div class="tools">
+          <button class="btn pri" id="addBtn">＋ 1行追加</button>
+          <button class="btn" id="renumBtn">番号を振り直す</button>
+          <button class="btn" id="advancedBtn">英語欄を表示</button>
+          <span style="flex:1"></span>
+          <button class="btn danger" id="clearBtn">全行クリア</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-h"><b>差し込みページ</b><span class="sub" id="rowCount">0 pages</span><span class="sp"></span><span class="sub">入力内容はこのブラウザに自動保存</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="thead"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="card-h"><b>一括貼り付け</b><span class="sub">Excel / Googleスプレッドシート対応</span></div>
+      <div class="card-b">
+        <textarea id="bulk" class="bulk" placeholder="ここにタブ区切りの表を貼り付け"></textarea>
+        <div class="hint" id="bulkHint">名前スーパー: 名前 [Tab] 肩書き [Tab] ラベル [Tab] 尺(秒)</div>
+        <div class="tools"><button class="btn" id="bulkAppend">末尾に追加</button><button class="btn" id="bulkReplace">全行を置き換え</button></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card">
+      <div class="card-h"><b>JSONプレビュー</b><span class="sp"></span><button class="btn sm" id="copyBtn">コピー</button></div>
+      <div class="card-b">
+        <textarea id="preview" class="preview" readonly spellcheck="false"></textarea>
+        <div class="status"><span class="dot"></span><span id="statusText">TelopStudio pages v1</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>既存JSONを編集</b></div>
+      <div class="card-b"><div class="drop" id="dropZone">JSONファイルをここへドロップ<br><span style="font-size:10px">またはクリックして選択</span></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>使い方</b></div>
+      <div class="card-b help">
+        1. レーン種別を選んで内容を入力<br>
+        2. <b>JSONをダウンロード</b><br>
+        3. TelopStudio の対象レーンで <code>読込</code><br>
+        4. <code>末尾に追加</code> または <code>置き換え</code> を選択<br><br>
+        JSONは TelopStudio の <code>type: pages</code> / <code>version: 1</code> 形式で生成します。
+      </div>
+    </div>
+  </aside>
+</main>
+<input id="fileInput" type="file" accept="application/json,.json" hidden>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+'use strict';
+var STORAGE='telopstudio-insert-maker-v1';
+var state={type:'name',laneId:'tl1',laneName:'TL1',startNum:101,advanced:false,pages:[]};
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s==null?'':s).replace(/[&<>\"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c];});}
+function num(v,d){var n=Number(v);return Number.isFinite(n)?n:d;}
+function bool(v){return v===true||v===1||v==='1'||String(v).toLowerCase()==='true';}
+function toast(msg){var el=$('toast');el.textContent=msg;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(function(){el.classList.remove('on');},1800);}
+function blankPage(n){return state.type==='name'
+  ?{num:n,label:'',dur:0,lock:false,memo:'',name:'',nameEN:'',title:'',titleEN:''}
+  :{num:n,label:'',dur:0,lock:false,memo:'',text:'',textEN:''};}
+function normalizePage(p,i){var b=blankPage(num(p&&p.num,state.startNum+i));Object.keys(b).forEach(function(k){if(p&&Object.prototype.hasOwnProperty.call(p,k))b[k]=p[k];});b.num=num(b.num,state.startNum+i);b.dur=Math.max(0,num(b.dur,0));b.lock=bool(b.lock);return b;}
+function syncSettings(){state.laneId=$('laneId').value.trim()||'tl1';state.laneName=$('laneName').value.trim()||state.laneId.toUpperCase();state.startNum=Math.max(1,Math.floor(num($('startNum').value,101)));save();renderPreview();}
+function save(){try{localStorage.setItem(STORAGE,JSON.stringify(state));}catch(e){}}
+function loadLocal(){try{var j=JSON.parse(localStorage.getItem(STORAGE)||'null');if(j&&Array.isArray(j.pages)){state.type=j.type==='side'?'side':'name';state.laneId=String(j.laneId||'tl1');state.laneName=String(j.laneName||'TL1');state.startNum=Math.max(1,Math.floor(num(j.startNum,101)));state.advanced=!!j.advanced;state.pages=j.pages.map(normalizePage);}}catch(e){}}
+function payload(){var type=state.type;var keys=type==='name'?['num','label','dur','lock','memo','name','nameEN','title','titleEN']:['num','label','dur','lock','memo','text','textEN'];var pages=state.pages.map(function(p){var o={};keys.forEach(function(k){o[k]=p[k];});o.num=num(o.num,0);o.dur=Math.max(0,num(o.dur,0));o.lock=!!o.lock;return o;});return {app:'TelopStudio',type:'pages',version:1,lane:state.laneId,laneName:state.laneName,laneType:type,exported:new Date().toISOString(),pages:pages};}
+function renderPreview(){var p=payload();$('preview').value=JSON.stringify(p,null,2);$('rowCount').textContent=state.pages.length+' page'+(state.pages.length===1?'':'s');$('statusText').textContent='TelopStudio pages v1 / '+(state.type==='name'?'名前スーパー':'サイドスーパー')+' / '+state.pages.length+'件';}
+function header(){var h=['<th style="width:42px">#</th>','<th style="width:78px">番号</th>'];if(state.type==='name'){h.push('<th>名前</th><th>肩書き・補足</th><th class="advanced '+(state.advanced?'on':'')+'">Name EN</th><th class="advanced '+(state.advanced?'on':'')+'">Title EN</th>');}else{h.push('<th style="min-width:280px">本文</th><th class="advanced '+(state.advanced?'on':'')+'">Text EN</th>');}h.push('<th style="min-width:130px">ラベル</th><th style="width:76px">尺</th><th style="min-width:140px">メモ</th><th style="width:54px">Lock</th><th style="width:110px">操作</th>');$('thead').innerHTML=h.join('');}
+function inputCell(key,value,cls,type){var t=type||'text';if(t==='check')return '<td class="'+(cls||'')+'"><input data-k="'+key+'" type="checkbox" '+(value?'checked':'')+'></td>';return '<td class="'+(cls||'')+'"><input data-k="'+key+'" type="'+t+'" value="'+esc(value)+'" '+(t==='number'?'step="1"':'')+'></td>';}
+function renderRows(){header();var body=$('tbody');if(!state.pages.length){body.innerHTML='<tr><td colspan="12" class="table-empty">まだページがありません。「＋ 1行追加」か一括貼り付けで作成できます。</td></tr>';renderPreview();save();return;}var html='';state.pages.forEach(function(p,i){html+='<tr data-i="'+i+'"><td><span class="row-index">'+(i+1)+'</span></td>';html+=inputCell('num',p.num,'num','number');if(state.type==='name'){html+=inputCell('name',p.name);html+=inputCell('title',p.title);html+=inputCell('nameEN',p.nameEN,'advanced '+(state.advanced?'on':''));html+=inputCell('titleEN',p.titleEN,'advanced '+(state.advanced?'on':''));}else{html+=inputCell('text',p.text);html+=inputCell('textEN',p.textEN,'advanced '+(state.advanced?'on':''));}html+=inputCell('label',p.label);html+=inputCell('dur',p.dur,'dur','number');html+=inputCell('memo',p.memo);html+=inputCell('lock',p.lock,'lock','check');html+='<td class="ops"><button class="btn sm icon" data-act="up" title="上へ">↑</button> <button class="btn sm icon" data-act="down" title="下へ">↓</button> <button class="btn sm icon danger" data-act="del" title="削除">×</button></td></tr>';});body.innerHTML=html;renderPreview();save();}
+function changeType(type){if(type===state.type)return;var old=state.pages;state.type=type;state.pages=old.map(function(p,i){var n=blankPage(num(p.num,state.startNum+i));n.label=p.label||'';n.dur=num(p.dur,0);n.lock=!!p.lock;n.memo=p.memo||'';if(type==='side'){n.text=p.text||[p.title,p.name].filter(Boolean).join(' ')||'';n.textEN=p.textEN||[p.titleEN,p.nameEN].filter(Boolean).join(' ')||'';}else{var s=String(p.text||'').split(/\r?\n/);n.title=s.length>1?s.shift():'';n.name=s.join(' ')||String(p.text||'');n.nameEN=String(p.textEN||'');}return n;});$('nameType').classList.toggle('on',type==='name');$('sideType').classList.toggle('on',type==='side');$('bulkHint').textContent=type==='name'?'名前スーパー: 名前 [Tab] 肩書き [Tab] ラベル [Tab] 尺(秒)':'サイドスーパー: 本文 [Tab] ラベル [Tab] 尺(秒)';renderRows();}
+function addRow(){var max=state.pages.reduce(function(m,p){return Math.max(m,num(p.num,0));},state.startNum-1);state.pages.push(blankPage(Math.max(state.startNum,max+1)));renderRows();setTimeout(function(){var rows=$('tbody').querySelectorAll('tr');var r=rows[rows.length-1];var x=r&&r.querySelector('input[data-k="'+(state.type==='name'?'name':'text')+'"]');if(x)x.focus();},0);}
+function renumber(){var n=Math.max(1,Math.floor(num($('startNum').value,state.startNum)));state.startNum=n;state.pages.forEach(function(p,i){p.num=n+i;});renderRows();toast('番号を振り直しました');}
+function parseBulk(replace){var raw=$('bulk').value.trim();if(!raw){toast('貼り付けデータがありません');return;}var lines=raw.split(/\r?\n/).filter(function(x){return x.trim()!=='';});var base=replace?[]:state.pages.slice();var max=base.reduce(function(m,p){return Math.max(m,num(p.num,0));},state.startNum-1);lines.forEach(function(line,idx){var c=line.split('\t');var p=blankPage(Math.max(state.startNum,max+idx+1));if(state.type==='name'){p.name=(c[0]||'').trim();p.title=(c[1]||'').trim();p.label=(c[2]||'').trim();p.dur=Math.max(0,num(c[3],0));}else{p.text=(c[0]||'').trim();p.label=(c[1]||'').trim();p.dur=Math.max(0,num(c[2],0));}base.push(p);});state.pages=base;$('bulk').value='';renderRows();toast(lines.length+'件を'+(replace?'読み込み':'追加')+'ました');}
+function filename(){var d=new Date().toISOString().slice(0,10);var lane=(state.laneId||'lane').replace(/[^A-Za-z0-9_-]/g,'_');return 'telop-pages-'+lane+'-'+d+'.json';}
+function download(){syncSettings();var blob=new Blob([JSON.stringify(payload(),null,2)+'\n'],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename();document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},500);toast('JSONを書き出しました');}
+function copy(){syncSettings();var text=JSON.stringify(payload(),null,2);if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){toast('JSONをコピーしました');},function(){fallbackCopy(text);});}else fallbackCopy(text);}
+function fallbackCopy(text){var t=document.createElement('textarea');t.value=text;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('JSONをコピーしました');}catch(e){toast('コピーできませんでした');}t.remove();}
+function loadJsonText(text){try{var j=JSON.parse(text);var list=Array.isArray(j)?j:(j&&Array.isArray(j.pages)?j.pages:null);if(!list)throw new Error('pages array not found');var detected=(j&&j.laneType==='side')?'side':(j&&j.laneType==='name')?'name':null;if(!detected&&list.length){detected=Object.prototype.hasOwnProperty.call(list[0],'text')?'side':'name';}state.type=detected||state.type;if(j&&!Array.isArray(j)){if(j.lane!=null)state.laneId=String(j.lane);if(j.laneName!=null)state.laneName=String(j.laneName);}state.pages=list.map(function(p,i){if(typeof p==='string'){var b=blankPage(state.startNum+i);if(state.type==='side')b.text=p;else b.name=p;return b;}return normalizePage(p,i);});$('laneId').value=state.laneId;$('laneName').value=state.laneName;$('nameType').classList.toggle('on',state.type==='name');$('sideType').classList.toggle('on',state.type==='side');$('bulkHint').textContent=state.type==='name'?'名前スーパー: 名前 [Tab] 肩書き [Tab] ラベル [Tab] 尺(秒)':'サイドスーパー: 本文 [Tab] ラベル [Tab] 尺(秒)';renderRows();toast(state.pages.length+'件を読み込みました');}catch(e){toast('TelopStudio用JSONを読み込めませんでした');}}
+function pickFile(){$('fileInput').value='';$('fileInput').click();}
+loadLocal();$('laneId').value=state.laneId;$('laneName').value=state.laneName;$('startNum').value=state.startNum;$('nameType').classList.toggle('on',state.type==='name');$('sideType').classList.toggle('on',state.type==='side');$('advancedBtn').textContent=state.advanced?'英語欄を隠す':'英語欄を表示';$('bulkHint').textContent=state.type==='name'?'名前スーパー: 名前 [Tab] 肩書き [Tab] ラベル [Tab] 尺(秒)':'サイドスーパー: 本文 [Tab] ラベル [Tab] 尺(秒)';renderRows();
+$('nameType').onclick=function(){changeType('name');};$('sideType').onclick=function(){changeType('side');};$('addBtn').onclick=addRow;$('renumBtn').onclick=renumber;$('downloadBtn').onclick=download;$('copyBtn').onclick=copy;$('loadBtn').onclick=pickFile;$('dropZone').onclick=pickFile;$('bulkAppend').onclick=function(){parseBulk(false);};$('bulkReplace').onclick=function(){parseBulk(true);};
+$('advancedBtn').onclick=function(){state.advanced=!state.advanced;this.textContent=state.advanced?'英語欄を隠す':'英語欄を表示';renderRows();};
+$('clearBtn').onclick=function(){if(!state.pages.length)return;if(confirm('入力中のページをすべて削除しますか？')){state.pages=[];renderRows();toast('全行をクリアしました');}};
+['laneId','laneName','startNum'].forEach(function(id){$(id).addEventListener('input',syncSettings);});
+$('tbody').addEventListener('input',function(e){var tr=e.target.closest('tr[data-i]');if(!tr||!e.target.dataset.k)return;var i=Number(tr.dataset.i),k=e.target.dataset.k;if(!state.pages[i])return;var v=e.target.type==='checkbox'?e.target.checked:e.target.value;if(k==='num'||k==='dur')v=num(v,0);state.pages[i][k]=v;renderPreview();save();});
+$('tbody').addEventListener('change',function(e){if(e.target.type==='checkbox')e.target.dispatchEvent(new Event('input',{bubbles:true}));});
+$('tbody').addEventListener('click',function(e){var b=e.target.closest('button[data-act]');if(!b)return;var tr=b.closest('tr[data-i]'),i=Number(tr.dataset.i),a=b.dataset.act;if(a==='del')state.pages.splice(i,1);if(a==='up'&&i>0){var x=state.pages[i-1];state.pages[i-1]=state.pages[i];state.pages[i]=x;}if(a==='down'&&i<state.pages.length-1){var y=state.pages[i+1];state.pages[i+1]=state.pages[i];state.pages[i]=y;}renderRows();});
+$('fileInput').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];if(!f)return;var r=new FileReader();r.onload=function(){loadJsonText(String(r.result||''));};r.readAsText(f);});
+var dz=$('dropZone');['dragenter','dragover'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');});});['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');});});dz.addEventListener('drop',function(e){var f=e.dataTransfer.files&&e.dataTransfer.files[0];if(!f)return;var r=new FileReader();r.onload=function(){loadJsonText(String(r.result||''));};r.readAsText(f);});
+})();
+</script>
+</body>
+</html>
