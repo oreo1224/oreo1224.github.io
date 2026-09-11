@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>機材準備・撤収チェックリスト</title>
+<style>
+:root{color-scheme:light dark;--bg:#f3f5f8;--panel:#fff;--text:#111827;--muted:#667085;--line:#d8dee8;--accent:#2563eb;--ok:#16a34a;--danger:#dc2626;--soft:#eef2f7;--shadow:0 8px 24px rgba(15,23,42,.08)}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1319;--panel:#171c24;--text:#f3f4f6;--muted:#9ca3af;--line:#313845;--accent:#60a5fa;--ok:#4ade80;--danger:#f87171;--soft:#222a35;--shadow:0 8px 24px rgba(0,0,0,.28)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}.app{max-width:1500px;margin:auto;padding:18px}header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}h1{margin:0;font-size:clamp(24px,3vw,34px)}.sub,.muted{color:var(--muted);font-size:12px}.status{font-size:12px;color:var(--muted)}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.toolbar{padding:14px;display:flex;gap:9px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.field{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1}.field label{font-size:11px;color:var(--muted);font-weight:700}input,select,textarea{background:transparent;border:1px solid var(--line);border-radius:10px;padding:9px 10px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}.btn{border:1px solid var(--line);background:var(--panel);padding:9px 12px;border-radius:10px;font-weight:700;white-space:nowrap}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.danger{color:var(--danger)}.progress-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}.card{padding:14px}.label{font-size:12px;color:var(--muted);font-weight:700}.big{font-size:27px;font-weight:800;margin-top:3px}.bar{height:8px;background:var(--soft);border-radius:999px;overflow:hidden;margin-top:8px}.fill{height:100%;background:var(--accent);width:0}.fill.ok{background:var(--ok)}.table-wrap{overflow:auto;border-radius:16px}.table-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.filters,.actions{display:flex;gap:8px;flex-wrap:wrap}.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;border-right:1px solid var(--line);background:transparent;padding:8px 11px}.seg button:last-child{border-right:0}.seg button.active{background:var(--accent);color:#fff}table{width:100%;border-collapse:collapse;min-width:1220px}th,td{border-bottom:1px solid var(--line);padding:8px;vertical-align:middle;text-align:left}th{position:sticky;top:0;background:var(--panel);z-index:2;font-size:12px;color:var(--muted);white-space:nowrap}tbody tr.done-all{background:color-mix(in srgb,var(--ok) 9%,transparent)}td input[type=text],td input[type=number]{width:100%;padding:7px 8px;border-radius:8px}.check{text-align:center;width:76px}.check input{width:24px;height:24px;accent-color:var(--accent)}.check.out input{accent-color:var(--ok)}.row-actions{display:flex;gap:5px}.icon{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 8px}.empty{text-align:center;color:var(--muted);padding:42px}.hidden{display:none!important}.modal{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.modal.open{display:flex}.dialog{width:min(760px,100%);max-height:90vh;overflow:auto;padding:18px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.dialog textarea{width:100%;min-height:110px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}.foot{text-align:center;color:var(--muted);font-size:12px;padding:18px}.nowrap{white-space:nowrap}
+@media(max-width:760px){.app{padding:10px}.progress-grid{grid-template-columns:1fr}.toolbar{align-items:stretch}.field{min-width:100%}.toolbar>.btn{flex:1}.grid2{grid-template-columns:1fr}.full{grid-column:auto}.filters{width:100%}.seg{flex:1}.seg button{flex:1}.table-head{align-items:stretch}}
+@media print{body{background:#fff;color:#000}.app{max-width:none;padding:0}.toolbar,.actions,.row-actions,.foot,.sub{display:none!important}.panel{border:0;box-shadow:none}.progress-grid{display:none}table{min-width:0;font-size:9pt}th,td{padding:4px;border-color:#bbb}input,select{border:0;padding:0;background:transparent;color:#000;appearance:none}.check input{width:14px;height:14px}.table-wrap{overflow:visible}h1{font-size:18pt}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div><h1>機材準備・撤収チェックリスト</h1><div class="sub">学園祭・イベント向け / ブラウザ内に自動保存</div></div><div id="saveStatus" class="status">未保存</div></header>
+<section class="panel toolbar">
+<div class="field" style="min-width:250px"><label>イベント名</label><input id="eventName" placeholder="例：学園祭 配信機材"></div>
+<div class="field"><label>実施日</label><input id="eventDate" type="date"></div>
+<button id="addBtn" class="btn primary">＋ 機材追加</button>
+<button id="csvBtn" class="btn">CSV出力</button>
+<label class="btn" for="csvImport">CSV読込</label><input id="csvImport" class="hidden" type="file" accept=".csv,text/csv">
+<button id="backupBtn" class="btn">JSONバックアップ</button>
+<label class="btn" for="jsonImport">JSON復元</label><input id="jsonImport" class="hidden" type="file" accept=".json,application/json">
+<button class="btn" onclick="window.print()">印刷</button>
+</section>
+<section class="progress-grid">
+<div class="panel card"><div class="label">登録品目</div><div class="big"><span id="totalCount">0</span> 品目</div><div id="qtyCount" class="muted">合計数量 0</div></div>
+<div class="panel card"><div class="label">準備完了</div><div class="big"><span id="prepCount">0</span> / <span id="prepTotal">0</span></div><div class="bar"><div id="prepBar" class="fill"></div></div></div>
+<div class="panel card"><div class="label">撤収完了</div><div class="big"><span id="outCount">0</span> / <span id="outTotal">0</span></div><div class="bar"><div id="outBar" class="fill ok"></div></div></div>
+</section>
+<section class="panel table-wrap">
+<div class="table-head">
+<div class="filters"><input id="search" placeholder="機材名・出庫元・担当などを検索" style="min-width:260px"><select id="sourceFilter"><option value="">出庫元：すべて</option></select><div id="viewSeg" class="seg"><button class="active" data-view="all">すべて</button><button data-view="prep">準備未完</button><button data-view="out">撤収未完</button></div></div>
+<div class="actions"><button id="renumberBtn" class="btn">通し番号を振り直す</button><button id="resetChecksBtn" class="btn danger">チェックを全解除</button></div>
+</div>
+<table><thead><tr><th style="width:65px">No.</th><th style="width:120px">区分</th><th style="width:150px">出庫元</th><th style="min-width:190px">機材名</th><th style="width:150px">型番・管理番号</th><th style="width:75px">数量</th><th style="width:120px">担当</th><th class="check">準備</th><th class="check">撤収</th><th style="min-width:180px">備考</th><th style="width:86px">操作</th></tr></thead><tbody id="tbody"></tbody></table>
+<div id="empty" class="empty hidden">表示できる機材がありません。</div>
+</section>
+<div class="foot">データはこの端末の localStorage に保存されます。別端末への受け渡しは CSV / JSON を利用してください。</div>
+</div>
+<div id="modal" class="modal" role="dialog" aria-modal="true">
+<div class="panel dialog"><h2 id="modalTitle">機材を追加</h2><div class="grid2">
+<div class="field"><label>通し番号</label><input id="mNo" type="number" min="1"></div>
+<div class="field"><label>区分</label><input id="mCategory" list="categories" placeholder="例：カメラ"><datalist id="categories"><option>カメラ</option><option>レンズ</option><option>映像</option><option>音声</option><option>配信</option><option>電源</option><option>ケーブル</option><option>三脚・リグ</option><option>ネットワーク</option><option>その他</option></datalist></div>
+<div class="field"><label>出庫元</label><input id="mSource" placeholder="例：委員会倉庫 / 個人 / 大学"></div>
+<div class="field"><label>機材名 *</label><input id="mName" placeholder="例：ATEM Mini Extreme ISO G2"></div>
+<div class="field"><label>型番・管理番号</label><input id="mModel" placeholder="例：CAM-03"></div>
+<div class="field"><label>数量</label><input id="mQty" type="number" min="1" value="1"></div>
+<div class="field"><label>担当</label><input id="mOwner" placeholder="例：映像班"></div>
+<div class="field full"><label>備考</label><textarea id="mNote" placeholder="付属品、注意事項など"></textarea></div>
+</div><div class="modal-actions"><button id="cancelBtn" class="btn">キャンセル</button><button id="saveItemBtn" class="btn primary">保存</button></div></div>
+</div>
+<script>
+(()=>{
+'use strict';
+const KEY='equipment-checklist-v1';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const blank={eventName:'',eventDate:'',items:[]};
+let state=load(),view='all',editingId=null,saveTimer=null;
+const el={eventName:$('#eventName'),eventDate:$('#eventDate'),tbody:$('#tbody'),search:$('#search'),sourceFilter:$('#sourceFilter'),empty:$('#empty'),modal:$('#modal')};
+function cloneBlank(){return {eventName:'',eventDate:'',items:[]}}
+function uid(){return crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));return v&&Array.isArray(v.items)?{...cloneBlank(),...v}:cloneBlank()}catch{return cloneBlank()}}
+function save(){clearTimeout(saveTimer);$('#saveStatus').textContent='保存中…';saveTimer=setTimeout(()=>{localStorage.setItem(KEY,JSON.stringify(state));$('#saveStatus').textContent='✓ 自動保存済み'},150)}
+function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function nextNo(){return state.items.length?Math.max(...state.items.map(x=>Number(x.no)||0))+1:1}
+function sortItems(){state.items.sort((a,b)=>(Number(a.no)||999999)-(Number(b.no)||999999))}
+function renderSources(){const current=el.sourceFilter.value;const sources=[...new Set(state.items.map(i=>i.source).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));el.sourceFilter.innerHTML='<option value="">出庫元：すべて</option>'+sources.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');if(sources.includes(current))el.sourceFilter.value=current}
+function renderStats(){const n=state.items.length,qty=state.items.reduce((a,i)=>a+(Number(i.qty)||0),0),prep=state.items.filter(i=>i.prep).length,out=state.items.filter(i=>i.out).length;$('#totalCount').textContent=n;$('#qtyCount').textContent=`合計数量 ${qty}`;$('#prepCount').textContent=prep;$('#prepTotal').textContent=n;$('#outCount').textContent=out;$('#outTotal').textContent=n;$('#prepBar').style.width=(n?prep/n*100:0)+'%';$('#outBar').style.width=(n?out/n*100:0)+'%'}
+function render(){sortItems();renderSources();renderStats();const q=el.search.value.trim().toLowerCase(),src=el.sourceFilter.value;const rows=state.items.filter(i=>{if(src&&i.source!==src)return false;if(view==='prep'&&i.prep)return false;if(view==='out'&&i.out)return false;if(q&&!`${i.no} ${i.category} ${i.source} ${i.name} ${i.model} ${i.owner} ${i.note}`.toLowerCase().includes(q))return false;return true});el.empty.classList.toggle('hidden',rows.length>0);el.tbody.innerHTML=rows.map(i=>`<tr data-id="${i.id}" class="${i.prep&&i.out?'done-all':''}"><td><input class="row-no" type="number" min="1" value="${Number(i.no)||''}"></td><td>${esc(i.category||'')}</td><td>${esc(i.source||'')}</td><td><strong>${esc(i.name||'')}</strong></td><td>${esc(i.model||'')}</td><td>${Number(i.qty)||1}</td><td>${esc(i.owner||'')}</td><td class="check"><input class="prep-check" type="checkbox" ${i.prep?'checked':''}></td><td class="check out"><input class="out-check" type="checkbox" ${i.out?'checked':''}></td><td>${esc(i.note||'')}</td><td><div class="row-actions"><button class="icon edit" title="編集">✎</button><button class="icon delete" title="削除">🗑</button></div></td></tr>`).join('');bindRows()}
+function bindRows(){el.tbody.querySelectorAll('tr').forEach(tr=>{const id=tr.dataset.id;tr.querySelector('.prep-check').onchange=e=>update(id,{prep:e.target.checked});tr.querySelector('.out-check').onchange=e=>update(id,{out:e.target.checked});tr.querySelector('.row-no').onchange=e=>update(id,{no:Number(e.target.value)||nextNo()});tr.querySelector('.edit').onclick=()=>openModal(id);tr.querySelector('.delete').onclick=()=>removeItem(id)})}
+function update(id,patch){const i=state.items.find(x=>x.id===id);if(!i)return;Object.assign(i,patch);save();render()}
+function removeItem(id){const i=state.items.find(x=>x.id===id);if(!i)return;if(confirm(`「${i.name}」を削除しますか？`)){state.items=state.items.filter(x=>x.id!==id);save();render()}}
+function openModal(id=null){editingId=id;const i=id?state.items.find(x=>x.id===id):null;$('#modalTitle').textContent=i?'機材を編集':'機材を追加';$('#mNo').value=i?.no??nextNo();$('#mCategory').value=i?.category??'';$('#mSource').value=i?.source??'';$('#mName').value=i?.name??'';$('#mModel').value=i?.model??'';$('#mQty').value=i?.qty??1;$('#mOwner').value=i?.owner??'';$('#mNote').value=i?.note??'';el.modal.classList.add('open');setTimeout(()=>$('#mName').focus(),20)}
+function closeModal(){el.modal.classList.remove('open');editingId=null}
+function saveModal(){const name=$('#mName').value.trim();if(!name){alert('機材名を入力してください。');return}const data={no:Number($('#mNo').value)||nextNo(),category:$('#mCategory').value.trim(),source:$('#mSource').value.trim(),name,model:$('#mModel').value.trim(),qty:Math.max(1,Number($('#mQty').value)||1),owner:$('#mOwner').value.trim(),note:$('#mNote').value.trim()};if(editingId){const i=state.items.find(x=>x.id===editingId);Object.assign(i,data)}else state.items.push({id:uid(),...data,prep:false,out:false});save();closeModal();render()}
+function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function download(name,text,type='text/plain;charset=utf-8'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},0)}
+function exportCSV(){const head=['No','区分','出庫元','機材名','型番・管理番号','数量','担当','準備','撤収','備考'];const rows=state.items.map(i=>[i.no,i.category,i.source,i.name,i.model,i.qty,i.owner,i.prep?'済':'',i.out?'済':'',i.note]);download(`equipment_${state.eventDate||'list'}.csv`,'\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8')}
+function parseCSV(text){const rows=[];let row=[],cell='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')q=false;else cell+=c}else if(c==='"')q=true;else if(c===','){row.push(cell);cell=''}else if(c==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell=''}else cell+=c}if(cell||row.length){row.push(cell);rows.push(row)}return rows}
+function importCSV(file){const r=new FileReader();r.onload=()=>{try{const rows=parseCSV(String(r.result).replace(/^\ufeff/,''));if(rows.length<2)throw new Error();const data=rows.slice(1).filter(r=>r.some(Boolean)).map(r=>({id:uid(),no:Number(r[0])||nextNo(),category:r[1]||'',source:r[2]||'',name:r[3]||'',model:r[4]||'',qty:Math.max(1,Number(r[5])||1),owner:r[6]||'',prep:/済|true|1/i.test(r[7]||''),out:/済|true|1/i.test(r[8]||''),note:r[9]||''}));if(confirm(`${data.length}件を読み込み、現在の一覧を置き換えますか？`)){state.items=data;save();render()}}catch{alert('CSVを読み込めませんでした。')}};r.readAsText(file,'utf-8')}
+function exportJSON(){download(`equipment_backup_${state.eventDate||'list'}.json`,JSON.stringify(state,null,2),'application/json;charset=utf-8')}
+function importJSON(file){const r=new FileReader();r.onload=()=>{try{const data=JSON.parse(r.result);if(!data||!Array.isArray(data.items))throw new Error();if(confirm('現在の一覧をバックアップ内容で置き換えますか？')){state={...cloneBlank(),...data};el.eventName.value=state.eventName||'';el.eventDate.value=state.eventDate||'';save();render()}}catch{alert('JSONを読み込めませんでした。')}};r.readAsText(file,'utf-8')}
+el.eventName.value=state.eventName||'';el.eventDate.value=state.eventDate||'';
+el.eventName.oninput=()=>{state.eventName=el.eventName.value;save()};el.eventDate.onchange=()=>{state.eventDate=el.eventDate.value;save()};
+$('#addBtn').onclick=()=>openModal();$('#cancelBtn').onclick=closeModal;$('#saveItemBtn').onclick=saveModal;el.modal.onclick=e=>{if(e.target===el.modal)closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&el.modal.classList.contains('open'))closeModal()});
+el.search.oninput=render;el.sourceFilter.onchange=render;$('#viewSeg').onclick=e=>{const b=e.target.closest('button[data-view]');if(!b)return;view=b.dataset.view;$$('#viewSeg button').forEach(x=>x.classList.toggle('active',x===b));render()};
+$('#renumberBtn').onclick=()=>{sortItems();state.items.forEach((i,n)=>i.no=n+1);save();render()};$('#resetChecksBtn').onclick=()=>{if(confirm('準備・撤収のチェックをすべて解除しますか？')){state.items.forEach(i=>{i.prep=false;i.out=false});save();render()}};
+$('#csvBtn').onclick=exportCSV;$('#backupBtn').onclick=exportJSON;$('#csvImport').onchange=e=>{const f=e.target.files[0];if(f)importCSV(f);e.target.value=''};$('#jsonImport').onchange=e=>{const f=e.target.files[0];if(f)importJSON(f);e.target.value=''};
+render();
+})();
+</script>
+</body>
+</html>
