@@ -8,6 +8,7 @@
     <title>掲示物ジェネレーター</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
     <link rel="preload" href="./assets/fonts/BIZUDPGothic-Bold.woff" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="./assets/fonts/HGPSoeiKakupoptai.woff" as="font" type="font/woff" crossorigin>
     <link rel="stylesheet" href="./styles.css">
     <script src="./app.js" defer></script>
   </head>
@@ -43,7 +44,7 @@
             <svg class="icon" aria-hidden="true"><use href="#icon-refresh"/></svg>リセット
           </button>
         </div>
-        <p class="panel-intro">ロゴと文面を差し替えるだけ。</p>
+        <p class="panel-intro">文面とロゴを編集して、位置も調整。</p>
 
         <form id="posterForm" autocomplete="off">
           <div class="editor-section logo-section">
@@ -72,7 +73,7 @@
             <div class="font-choice">
               <label for="rainbowFont">フォント</label>
               <select id="rainbowFont" name="rainbowFont" aria-describedby="fontStatus">
-                <option value="pop" selected>創英角ポップ体（端末のフォント）</option>
+                <option value="pop" selected>HGP創英角ポップ体（同梱）</option>
                 <option value="gothic">角ゴシック（同梱）</option>
               </select>
               <p id="fontStatus" class="field-hint" role="status">創英角ポップ体を確認しています…</p>
@@ -105,7 +106,48 @@
               <input id="bottomInput" name="bottom" type="text" value="事故したら 460 市町村を廻って いただきます" maxlength="120">
             </div>
           </div>
-          <p class="fixed-note"><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>「（本物）」と赤い矢印は固定です。</p>
+          <div class="editor-section position-section">
+            <div class="section-label"><span class="step-number">04</span><h2>位置調整</h2></div>
+            <label for="positionTarget">動かす対象</label>
+            <select id="positionTarget" aria-describedby="positionHint">
+              <option value="rainbow">虹文字全体</option>
+              <optgroup id="rainbowLineTargets" label="虹文字を1行ずつ">
+                <option value="rainbowLine0">虹文字 1行目</option>
+                <option value="rainbowLine1">虹文字 2行目</option>
+                <option value="rainbowLine2">虹文字 3行目</option>
+                <option value="rainbowLine3">虹文字 4行目</option>
+              </optgroup>
+              <option value="logo">ロゴ</option>
+              <option value="genuine">（本物）</option>
+              <option value="use">「使用中！！」の行</option>
+              <option value="stop">「停止する！」の行</option>
+              <option value="dont">「曲げるな！！」の行</option>
+              <option value="bottom">「いただきます」の行</option>
+            </select>
+            <p id="positionHint" class="field-hint">元の位置からの移動量。＋で右 / 下に動きます。</p>
+            <div class="position-axis">
+              <div class="axis-heading">
+                <label for="positionX">X <span>左右</span></label>
+                <span class="position-value"><input id="positionXNumber" type="number" min="-100" max="100" step="0.5" value="0" aria-label="Xの移動量（mm）"><span>mm</span></span>
+              </div>
+              <input id="positionX" type="range" min="-100" max="100" step="0.5" value="0" aria-label="X（左右）の位置" aria-valuetext="0 mm">
+              <div class="axis-scale" aria-hidden="true"><span>← 左</span><span>右 →</span></div>
+            </div>
+            <div class="position-axis">
+              <div class="axis-heading">
+                <label for="positionY">Y <span>上下</span></label>
+                <span class="position-value"><input id="positionYNumber" type="number" min="-100" max="100" step="0.5" value="0" aria-label="Yの移動量（mm）"><span>mm</span></span>
+              </div>
+              <input id="positionY" type="range" min="-100" max="100" step="0.5" value="0" aria-label="Y（上下）の位置" aria-valuetext="0 mm">
+              <div class="axis-scale" aria-hidden="true"><span>↑ 上</span><span>下 ↓</span></div>
+            </div>
+            <div class="position-reset-actions">
+              <button id="resetPositionButton" class="button-text" type="button">この対象を元の位置へ</button>
+              <button id="resetAllPositionsButton" class="button-text" type="button">全位置を戻す</button>
+            </div>
+            <p class="field-hint">紙の外にはみ出した部分は印刷されません。</p>
+          </div>
+          <p class="fixed-note"><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>赤い矢印と「（本物）」の文言は固定です。</p>
         </form>
         <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
       </section>
@@ -140,20 +182,28 @@
                 </defs>
                 <rect width="1122.52" height="793.7" fill="#ffffff"/>
                 <image id="posterLogo" x="872" y="35" width="196" height="70" preserveAspectRatio="xMidYMid meet" visibility="hidden"/>
-                <use id="rainbowShadow" href="#rainbowText" transform="translate(2.2 2.8)" fill="#383838" opacity="0.24" aria-hidden="true"/>
-                <rect id="rainbowFill" x="60" y="75" width="730" height="380" fill="url(#posterRainbow)" clip-path="url(#rainbowClip)"/>
-                <path id="fixedArrow" fill="#c71930" d="M807 297 H950 V254 L1043 338 L950 422 V379 H807 Z"/>
-                <rect x="492" y="458" width="216" height="55" rx="7" fill="#b81e32"/>
-                <text x="600" y="499" text-anchor="middle" fill="#ffffff" class="poster-font" font-weight="700" font-size="34">（本物）</text>
-                <g class="poster-font poster-body" font-weight="700">
-                  <g id="useOutline" aria-hidden="true"></g>
-                  <text id="useText" x="78" y="584" font-size="41" fill="#20212b" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke fill">34,000名の自治体職員が使用中！！</text>
-                  <text id="stopText" x="78" y="632" font-size="44" fill="#172b76">全国の市町村業務が 停止する！</text>
-                  <text id="dontText" x="78" y="695" font-size="36" fill="#4b2065">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</text>
-                  <text id="bottomText" x="78" y="747" font-size="25" fill="#b34c1d">事故したら 460 市町村を廻って いただきます</text>
+                <g id="rainbowPosition">
+                  <use id="rainbowShadow" href="#rainbowText" transform="translate(2.2 2.8)" fill="#383838" opacity="0.24" aria-hidden="true"/>
+                  <rect id="rainbowFill" x="-1122.52" y="-793.7" width="3367.56" height="2381.1" fill="url(#posterRainbow)" clip-path="url(#rainbowClip)"/>
                 </g>
-                <g id="stopReflection" class="poster-font" font-weight="700" mask="url(#stopReflectionMask)" aria-hidden="true">
-                  <use href="#stopText" transform="translate(0 958) scale(1 -0.5)"/>
+                <path id="fixedArrow" fill="#c71930" d="M807 297 H950 V254 L1043 338 L950 422 V379 H807 Z"/>
+                <g id="genuinePosition">
+                  <rect x="492" y="458" width="216" height="55" rx="7" fill="#b81e32"/>
+                  <text x="600" y="499" text-anchor="middle" fill="#ffffff" class="poster-font" font-weight="700" font-size="34">（本物）</text>
+                </g>
+                <g class="poster-font poster-body" font-weight="700">
+                  <g id="usePosition">
+                    <g id="useOutline" aria-hidden="true"></g>
+                    <text id="useText" x="78" y="584" font-size="41" fill="#20212b" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke fill">34,000名の自治体職員が使用中！！</text>
+                  </g>
+                  <g id="dontPosition"><text id="dontText" x="78" y="695" font-size="36" fill="#4b2065">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</text></g>
+                  <g id="bottomPosition"><text id="bottomText" x="78" y="747" font-size="25" fill="#b34c1d">事故したら 460 市町村を廻って いただきます</text></g>
+                </g>
+                <g id="stopPosition" class="poster-font" font-weight="700">
+                  <g class="poster-body"><text id="stopText" x="78" y="632" font-size="44" fill="#172b76">全国の市町村業務が 停止する！</text></g>
+                  <g id="stopReflection" mask="url(#stopReflectionMask)" aria-hidden="true">
+                    <use href="#stopText" transform="translate(0 958) scale(1 -0.5)"/>
+                  </g>
                 </g>
               </svg>
             </div>

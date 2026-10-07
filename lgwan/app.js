@@ -15,6 +15,25 @@
   const posterLogo = byId("posterLogo");
   const thumbnail = byId("logoThumbnail");
   const feedback = byId("feedback");
+  const positionTarget = byId("positionTarget");
+  const positionControls = {
+    x: [byId("positionX"), byId("positionXNumber")],
+    y: [byId("positionY"), byId("positionYNumber")],
+  };
+  const positionElements = {
+    rainbow: "rainbowPosition",
+    logo: "posterLogo",
+    genuine: "genuinePosition",
+    use: "usePosition",
+    stop: "stopPosition",
+    dont: "dontPosition",
+    bottom: "bottomPosition",
+  };
+  const positions = Object.fromEntries(
+    [...Object.keys(positionElements), ...Array.from({ length: 6 }, (_, index) => `rainbowLine${index}`)]
+      .map((key) => [key, { x: 0, y: 0 }]),
+  );
+  const unitsPerMm = { x: 1122.52 / 297, y: 793.7 / 210 };
   const svgNamespace = "http://www.w3.org/2000/svg";
   const bindings = [
     ["useInput", "useText"],
@@ -69,7 +88,7 @@
     }
     const selectedPop = rainbowFont.value === "pop";
     fontStatus.textContent = selectedPop
-      ? (popFontAvailable ? "端末にある創英角ポップ体を使用しています。" : "この端末には創英角ポップ体が見つかりません。角ゴシックで表示しています。")
+      ? (popFontAvailable ? "追加されたHGP創英角ポップ体を使用しています。" : "創英角ポップ体を読み込めませんでした。角ゴシックで表示しています。")
       : "BIZ UDPゴシックを使用しています。";
     fontStatus.classList.toggle("font-missing", selectedPop && !popFontAvailable);
     render();
@@ -79,8 +98,62 @@
     }
   }
 
+  function syncPositionControls() {
+    const position = positions[positionTarget.value];
+    for (const [axis, controls] of Object.entries(positionControls)) {
+      for (const control of controls) control.value = String(position[axis]);
+      controls[0].setAttribute("aria-valuetext", `${position[axis]} mm`);
+    }
+  }
+
+  function syncRainbowPositionChoices(lineCount) {
+    const choices = byId("rainbowLineTargets");
+    if (choices.children.length === lineCount) return;
+    const selected = positionTarget.value;
+    choices.replaceChildren(...Array.from({ length: lineCount }, (_, index) => {
+      const option = document.createElement("option");
+      option.value = `rainbowLine${index}`;
+      option.textContent = `虹文字 ${index + 1}行目`;
+      return option;
+    }));
+    positionTarget.value = selected;
+    if (!positionTarget.value) positionTarget.value = "rainbow";
+    syncPositionControls();
+  }
+
+  function updatePosition(control, normalizeNumber = false) {
+    if (control.value === "") return;
+    const value = Number(control.value);
+    if (!Number.isFinite(value)) return;
+    const axis = control.id.startsWith("positionX") ? "x" : "y";
+    const amount = Math.round(Math.max(-100, Math.min(100, value)) * 2) / 2;
+    positions[positionTarget.value][axis] = amount;
+    const [slider, number] = positionControls[axis];
+    slider.value = String(amount);
+    slider.setAttribute("aria-valuetext", `${amount} mm`);
+    // Leave a number field editable while typing a minus sign or decimal point.
+    if (control === slider || normalizeNumber) number.value = String(amount);
+    scheduleRender();
+  }
+
+  function renderPositions() {
+    for (const [target, elementId] of Object.entries(positionElements)) {
+      const { x, y } = positions[target];
+      byId(elementId).setAttribute("transform", `translate(${(x * unitsPerMm.x).toFixed(3)} ${(y * unitsPerMm.y).toFixed(3)})`);
+    }
+  }
+
+  function resetPositions(target) {
+    for (const key of target ? [target] : Object.keys(positions)) {
+      positions[key] = { x: 0, y: 0 };
+    }
+    syncPositionControls();
+    scheduleRender();
+  }
+
   function renderRainbow() {
     const lines = getRainbowLines();
+    syncRainbowPositionChoices(Math.min(6, lines.length));
     const weight = rainbowBold.checked ? "700" : "400";
     // The fill clip and shadow must use the same actual font weight.
     rainbowGroup.setAttribute("font-weight", weight);
@@ -98,10 +171,11 @@
       const text = document.createElementNS(svgNamespace, "text");
       const center = lineIndex === 1 ? 422 : 366;
       const baseline = 160 + lineIndex * lineHeight;
+      const offset = positions[`rainbowLine${lineIndex}`];
       text.setAttribute("x", "0");
       text.setAttribute("y", "0");
       // Shear around each baseline so the slant cannot drift across lines.
-      text.setAttribute("transform", `translate(${center} ${baseline}) skewX(-12)`);
+      text.setAttribute("transform", `translate(${center + offset.x * unitsPerMm.x} ${baseline + offset.y * unitsPerMm.y}) skewX(-12)`);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("font-size", String(fontSize));
       text.setAttribute("xml:space", "preserve");
@@ -134,6 +208,7 @@
     outline.setAttribute("stroke", "#20212b");
     outline.setAttribute("stroke-width", "4.8");
     byId("useOutline").replaceChildren(outline);
+    renderPositions();
   }
 
   function scheduleRender() {
@@ -216,6 +291,14 @@
 
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
+    if (event.target === positionTarget) {
+      syncPositionControls();
+      return;
+    }
+    if (Object.values(positionControls).flat().includes(event.target)) {
+      updatePosition(event.target);
+      return;
+    }
     if (event.target === rainbowInput) {
       const valid = validateRainbow();
       setFeedback(valid ? "" : "虹色の文面は6行以内にしてください。");
@@ -223,6 +306,15 @@
     if (event.target === rainbowBold || event.target === rainbowFont) loadRainbowFont().catch(scheduleRender);
     scheduleRender();
   });
+  positionTarget.addEventListener("change", syncPositionControls);
+  for (const [, number] of Object.values(positionControls)) {
+    number.addEventListener("change", () => {
+      if (number.value === "") syncPositionControls();
+      else updatePosition(number, true);
+    });
+  }
+  byId("resetPositionButton").addEventListener("click", () => resetPositions(positionTarget.value));
+  byId("resetAllPositionsButton").addEventListener("click", () => resetPositions());
   uploadButton.addEventListener("click", () => logoFile.click());
   logoFile.addEventListener("change", () => loadLogo(logoFile.files[0]));
   byId("removeLogoButton").addEventListener("click", () => { clearLogo(); setFeedback(); });
@@ -244,8 +336,9 @@
   document.addEventListener("drop", (event) => event.preventDefault());
 
   byId("resetButton").addEventListener("click", () => {
-    if (!window.confirm("文面とロゴを初期状態に戻しますか？")) return;
+    if (!window.confirm("文面・ロゴ・位置を初期状態に戻しますか？")) return;
     form.reset();
+    resetPositions();
     clearLogo();
     validateRainbow();
     setFeedback();

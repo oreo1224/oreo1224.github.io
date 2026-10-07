@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: "Poster Pop";
-  src: local("HGP創英角ﾎﾟｯﾌﾟ体"), local("HGP創英角ポップ体"), local("HGPSoeiKakupoptai"), local("HG創英角ﾎﾟｯﾌﾟ体"), local("HG創英角ポップ体"), local("HGSoeiKakupoptai"), local("HGS創英角ﾎﾟｯﾌﾟ体"), local("HGSSoeiKakupoptai");
+  src: url("./assets/fonts/HGPSoeiKakupoptai.woff") format("woff");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -93,9 +93,9 @@ textarea:focus, input[type="text"]:focus { border-color: #648fec; outline: none;
 textarea[aria-invalid="true"] { border-color: #c54848; }
 .field-hint { font-size: 11px; color: #8793a6; margin: 6px 0 0; }
 .font-choice { margin-top: 14px; }
-.font-choice > label { display: block; font-size: 12px; color: #5b6980; margin-bottom: 7px; }
-.font-choice select { width: 100%; min-height: 40px; padding: 8px 9px; border: 1px solid #dce3ed; border-radius: 6px; background: #fff; color: #25314a; font-size: 13px; }
-.font-choice select:focus-visible { outline: 3px solid #7ba9ff; outline-offset: 2px; }
+.font-choice > label, .position-section > label { display: block; font-size: 12px; color: #5b6980; margin-bottom: 7px; }
+.font-choice select, .position-section select { width: 100%; min-height: 40px; padding: 8px 9px; border: 1px solid #dce3ed; border-radius: 6px; background: #fff; color: #25314a; font-size: 13px; }
+.font-choice select:focus-visible, .position-section select:focus-visible { outline: 3px solid #7ba9ff; outline-offset: 2px; }
 .font-choice .font-missing { color: #9a671f; line-height: 1.65; }
 .bold-toggle { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; cursor: pointer; color: #5b6980; font-size: 13px; }
 .bold-toggle > span:first-child { display: flex; align-items: center; gap: 8px; }
@@ -115,6 +115,19 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
 .dot-blue { background: #273e87; }
 .dot-purple { background: #642974; }
 .dot-orange { background: #ba6236; }
+.position-section .field-hint { line-height: 1.7; }
+.position-axis { margin-top: 16px; }
+.axis-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.axis-heading > label { font-size: 13px; font-weight: 650; }
+.axis-heading > label span { color: var(--muted); font-weight: 400; margin-left: 5px; }
+.position-value { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.position-value input { width: 72px; min-height: 32px; padding: 4px 5px; border: 1px solid #dce3ed; border-radius: 5px; font-size: 13px; color: #25314a; text-align: right; font-variant-numeric: tabular-nums; }
+.position-value input:focus-visible { outline: 2px solid #7ba9ff; outline-offset: 2px; }
+.position-axis input[type="range"] { display: block; width: 100%; height: 26px; margin: 8px 0 0; accent-color: var(--blue); cursor: pointer; }
+.position-axis input[type="range"]:focus-visible { outline: 2px solid #7ba9ff; outline-offset: 2px; border-radius: 4px; }
+.axis-scale { display: flex; justify-content: space-between; color: #8793a6; font-size: 10px; }
+.position-reset-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.position-reset-actions .button-text { font-size: 11px; }
 .fixed-note { display: flex; align-items: center; gap: 6px; margin: 22px 0 0; padding-top: 17px; border-top: 1px solid #edf0f5; font-size: 11px; color: #8a96a8; }
 .fixed-note .icon { width: 14px; height: 14px; color: #6d809b; }
 .feedback { margin: 16px 0 0; font-size: 13px; line-height: 1.7; color: #b13e40; }
@@ -127,7 +140,7 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
 .preview-stage { padding: 36px 30px 22px; border: 1px solid #e0e6ef; border-radius: 12px; background-color: #eaf0f6; background-image: radial-gradient(#b9c7d74a .7px, transparent .7px); background-size: 9px 9px; }
 .paper-frame { margin: 0 auto; width: 100%; max-width: 1122.52px; aspect-ratio: 297 / 210; }
 .paper { width: 100%; height: 100%; background: #fff; box-shadow: 0 2px 5px #2436550c, 0 18px 32px -16px #24365555; }
-#poster { display: block; width: 100%; height: 100%; }
+#poster { display: block; width: 100%; height: 100%; overflow: hidden; }
 .poster-font { font-family: "Poster Gothic", "MS PGothic", "ＭＳ Ｐゴシック", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
 .rainbow-pop { font-family: "Poster Pop", "Poster Gothic", sans-serif; font-synthesis: weight; }
 .poster-body { stroke-width: .45px; stroke: currentColor; paint-order: stroke fill; }
@@ -174,8 +187,8 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
   .editor-panel { padding: 24px; }
   .panel-intro, textarea, input[type="text"] { font-size: 16px; }
   .field label, .section-label h2 { font-size: 14px; }
-  .font-choice > label, .bold-toggle { font-size: 14px; }
-  .font-choice select { font-size: 16px; }
+  .font-choice > label, .position-section > label, .bold-toggle { font-size: 14px; }
+  .font-choice select, .position-section select, .position-value input { font-size: 16px; }
   .field-hint, .fixed-note, .upload-footer > span { font-size: 12px; }
   .app-footer { padding: 0 18px 24px; font-size: 11px; }
 }
