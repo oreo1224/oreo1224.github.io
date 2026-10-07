@@ -26,6 +26,9 @@
   };
   const elementScale = byId("elementScale");
   const elementScaleNumber = byId("elementScaleNumber");
+  const settingsJson = byId("settingsJson");
+  const includeLogoJson = byId("includeLogoJson");
+  const jsonStatus = byId("jsonStatus");
   const positionElements = {
     rainbow: "rainbowPosition",
     logo: "posterLogo",
@@ -61,11 +64,191 @@
     ["dontInput", "dontText"],
     ["bottomInput", "bottomText"],
   ];
+  const textInputs = Object.fromEntries([
+    ["rainbow", rainbowInput],
+    ...bindings.map(([inputId]) => [inputId.replace(/Input$/, ""), byId(inputId)]),
+  ]);
   let imageVersion = 0;
   let logoLoading = false;
   let animationFrame = 0;
   let popFontAvailable = false;
   let popFontCheck;
+  let jsonDraft = false;
+  let jsonApplied = false;
+  let jsonRevision = 0;
+  let jsonTimer = 0;
+  let jsonOutputTimer = 0;
+  let lastJsonWrite = 0;
+
+  function setJsonStatus(message, error = false) {
+    if (jsonStatus.textContent !== message) jsonStatus.textContent = message;
+    jsonStatus.classList.toggle("is-error", error);
+    settingsJson.setAttribute("aria-invalid", String(error));
+  }
+
+  function getSettings() {
+    const settings = {
+      version: 1,
+      texts: Object.fromEntries(Object.entries(textInputs).map(([key, input]) => [key, input.value])),
+      rainbowStyle: {
+        font: rainbowFont.value,
+        bold: rainbowBold.checked,
+        italic: rainbowItalic.checked,
+        letterSpacingMm: Number(rainbowSpacing.value),
+      },
+      elements: Object.fromEntries(Object.keys(positions).map((key) => [key, {
+        xMm: positions[key].x,
+        yMm: positions[key].y,
+        scalePercent: scales[key],
+      }])),
+    };
+    if (includeLogoJson.checked) {
+      const dataUrl = posterLogo.getAttribute("href");
+      settings.logo = dataUrl ? { name: byId("logoName").textContent, dataUrl } : null;
+    }
+    return settings;
+  }
+
+  function syncJsonOutput(immediate = false) {
+    // Preserve a draft and its caret during font loads and preview redraws.
+    if (jsonDraft) return;
+    // Embedded images can be large; keep slider motion responsive while syncing.
+    const largeLogo = includeLogoJson.checked && (posterLogo.getAttribute("href")?.length || 0) > 100000;
+    const remaining = 150 - (Date.now() - lastJsonWrite);
+    if (!immediate && largeLogo && remaining > 0) {
+      clearTimeout(jsonOutputTimer);
+      jsonOutputTimer = setTimeout(() => syncJsonOutput(true), remaining);
+      return;
+    }
+    clearTimeout(jsonOutputTimer);
+    const output = JSON.stringify(getSettings(), null, 2);
+    if (settingsJson.value !== output) settingsJson.value = output;
+    lastJsonWrite = Date.now();
+  }
+
+  function settingsChanged() {
+    clearTimeout(jsonTimer);
+    jsonRevision += 1;
+    jsonDraft = false;
+    jsonApplied = false;
+    setJsonStatus("編集内容をJSONで表示しています。");
+  }
+
+  function requireObject(value, label, keys) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label}はオブジェクトにしてください。`);
+    if (Object.keys(value).some((key) => !keys.includes(key))) throw new Error(`${label}に未対応の項目があります。`);
+  }
+
+  function requireNumber(value, label, min, max, step) {
+    if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) {
+      throw new Error(`${label}は${min}〜${max}の数値にしてください。`);
+    }
+    if (Math.abs(value / step - Math.round(value / step)) > 1e-8) throw new Error(`${label}は${step}刻みにしてください。`);
+    return Number((Math.round(value / step) * step).toFixed(4));
+  }
+
+  function validateSettings(data) {
+    requireObject(data, "JSONのルート", ["version", "texts", "rainbowStyle", "elements", "logo"]);
+    if (data.version !== 1) throw new Error("versionは1を指定してください。");
+    requireObject(data.texts, "texts", Object.keys(textInputs));
+    const texts = {};
+    for (const key of Object.keys(textInputs)) {
+      const text = data.texts[key];
+      const max = key === "rainbow" ? 240 : 120;
+      if (typeof text !== "string" || text.length > max) throw new Error(`texts.${key}は${max}文字以内の文字列にしてください。`);
+      texts[key] = text.replace(/\r\n?/g, "\n");
+      if (key === "rainbow" && texts[key].split("\n").length > 6) throw new Error("texts.rainbowは6行以内にしてください。");
+      if (key !== "rainbow" && /\n/.test(texts[key])) throw new Error(`texts.${key}は改行を含まない1行の文字列にしてください。`);
+    }
+    requireObject(data.rainbowStyle, "rainbowStyle", ["font", "bold", "italic", "letterSpacingMm"]);
+    const style = data.rainbowStyle;
+    if (!["pop", "gothic"].includes(style.font)) throw new Error('rainbowStyle.fontは"pop"か"gothic"にしてください。');
+    for (const key of ["bold", "italic"]) {
+      if (typeof style[key] !== "boolean") throw new Error(`rainbowStyle.${key}はtrueかfalseにしてください。`);
+    }
+    const rainbowStyle = {
+      font: style.font, bold: style.bold, italic: style.italic,
+      letterSpacingMm: requireNumber(style.letterSpacingMm, "rainbowStyle.letterSpacingMm", -2, 5, 0.1),
+    };
+    requireObject(data.elements, "elements", Object.keys(positions));
+    const elements = {};
+    for (const key of Object.keys(positions)) {
+      const element = data.elements[key];
+      requireObject(element, `elements.${key}`, ["xMm", "yMm", "scalePercent"]);
+      elements[key] = {
+        xMm: requireNumber(element.xMm, `elements.${key}.xMm`, -100, 100, 0.5),
+        yMm: requireNumber(element.yMm, `elements.${key}.yMm`, -100, 100, 0.5),
+        scalePercent: requireNumber(element.scalePercent, `elements.${key}.scalePercent`, 25, 200, 1),
+      };
+    }
+    const settings = { version: 1, texts, rainbowStyle, elements };
+    if (Object.hasOwn(data, "logo")) {
+      if (data.logo === null) settings.logo = null;
+      else {
+        requireObject(data.logo, "logo", ["name", "dataUrl"]);
+        if (typeof data.logo.name !== "string" || !data.logo.name || data.logo.name.length > 512) throw new Error("logo.nameは1〜512文字の文字列にしてください。");
+        const source = data.logo.dataUrl;
+        if (typeof source !== "string" || source.length > 12 * 1024 * 1024 || !/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/.test(source)) {
+          throw new Error("logo.dataUrlは12MB以内のPNGのdata URLにしてください。");
+        }
+        settings.logo = { name: data.logo.name, dataUrl: source };
+      }
+    }
+    return settings;
+  }
+
+  async function applyJson() {
+    const revision = ++jsonRevision;
+    jsonDraft = true;
+    jsonApplied = false;
+    try {
+      if (settingsJson.value.length > 20 * 1024 * 1024) throw new Error("JSONが大きすぎます。ロゴ画像の容量を減らしてください。");
+      let parsed;
+      try { parsed = JSON.parse(settingsJson.value); }
+      catch { throw new Error("JSONの構文が正しくありません。括弧やカンマを確認してください。"); }
+      const settings = validateSettings(parsed);
+      if (settings.logo) {
+        setJsonStatus("ロゴ画像を確認しています…");
+        const image = new Image();
+        image.src = settings.logo.dataUrl;
+        try { await image.decode(); }
+        catch { throw new Error("JSON内のロゴ画像を読み込めませんでした。"); }
+        if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth > 1600 || image.naturalHeight > 800) {
+          throw new Error("JSON内のロゴ画像は1600×800px以内にしてください。");
+        }
+      }
+      if (revision !== jsonRevision) return;
+      // Validate every field and decode any image before committing any changes.
+      for (const [key, input] of Object.entries(textInputs)) input.value = settings.texts[key];
+      rainbowFont.value = settings.rainbowStyle.font;
+      rainbowBold.checked = settings.rainbowStyle.bold;
+      rainbowItalic.checked = settings.rainbowStyle.italic;
+      rainbowSpacing.value = String(settings.rainbowStyle.letterSpacingMm);
+      rainbowSpacingNumber.value = rainbowSpacing.value;
+      for (const [key, element] of Object.entries(settings.elements)) {
+        positions[key] = { x: element.xMm, y: element.yMm };
+        scales[key] = element.scalePercent;
+      }
+      includeLogoJson.checked = Object.hasOwn(settings, "logo");
+      if (includeLogoJson.checked) {
+        clearLogo();
+        if (settings.logo) showLogo(settings.logo.dataUrl, settings.logo.name);
+      }
+      validateRainbow();
+      setFeedback();
+      render();
+      syncPositionControls();
+      loadRainbowFont().catch(scheduleRender);
+      jsonApplied = true;
+      setJsonStatus("JSONを反映しました。");
+      if (document.activeElement !== settingsJson) {
+        jsonDraft = false;
+        syncJsonOutput();
+      }
+    } catch (error) {
+      if (revision === jsonRevision) setJsonStatus(error.message, true);
+    }
+  }
 
   function setFeedback(message = "", success = false) {
     feedback.textContent = message;
@@ -279,6 +462,7 @@
     outline.setAttribute("stroke-width", "4.8");
     byId("useOutline").replaceChildren(outline);
     renderPositions();
+    syncJsonOutput();
   }
 
   function scheduleRender() {
@@ -299,6 +483,19 @@
     byId("replaceLabel").hidden = true;
     byId("removeLogoButton").hidden = true;
     byId("logoName").textContent = "PNG・JPG・WEBP・GIF・SVG";
+    syncJsonOutput(true);
+  }
+
+  function showLogo(source, name) {
+    thumbnail.src = source;
+    posterLogo.setAttribute("href", source);
+    posterLogo.setAttribute("visibility", "visible");
+    thumbnail.hidden = false;
+    byId("uploadPrompt").hidden = true;
+    byId("replaceLabel").hidden = false;
+    byId("removeLogoButton").hidden = false;
+    byId("logoName").textContent = name;
+    syncJsonOutput(true);
   }
 
   async function loadLogo(file) {
@@ -314,6 +511,7 @@
       return;
     }
 
+    settingsChanged();
     const currentVersion = ++imageVersion;
     logoLoading = true;
     printButton.disabled = true;
@@ -337,13 +535,7 @@
       thumbnail.src = source;
       await thumbnail.decode();
       if (currentVersion !== imageVersion) return;
-      posterLogo.setAttribute("href", source);
-      posterLogo.setAttribute("visibility", "visible");
-      thumbnail.hidden = false;
-      byId("uploadPrompt").hidden = true;
-      byId("replaceLabel").hidden = false;
-      byId("removeLogoButton").hidden = false;
-      byId("logoName").textContent = file.name;
+      showLogo(source, file.name);
       setFeedback();
     } catch {
       if (currentVersion === imageVersion) {
@@ -361,6 +553,17 @@
 
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
+    if (event.target === settingsJson) {
+      clearTimeout(jsonTimer);
+      jsonRevision += 1;
+      jsonDraft = true;
+      jsonApplied = false;
+      setJsonStatus("JSONを確認しています…");
+      jsonTimer = setTimeout(applyJson, 350);
+      return;
+    }
+    if (event.target === logoFile) return;
+    if (event.target !== positionTarget) settingsChanged();
     if (event.target === elementScale || event.target === elementScaleNumber) {
       updateScale(event.target);
       return;
@@ -385,6 +588,27 @@
     scheduleRender();
   });
   positionTarget.addEventListener("change", syncPositionControls);
+  settingsJson.addEventListener("blur", () => {
+    if (jsonApplied) {
+      jsonDraft = false;
+      syncJsonOutput(true);
+    }
+  });
+  byId("refreshJsonButton").addEventListener("click", () => {
+    settingsChanged();
+    syncJsonOutput(true);
+  });
+  byId("copyJsonButton").addEventListener("click", async () => {
+    if (!jsonDraft) syncJsonOutput(true);
+    try {
+      await navigator.clipboard.writeText(settingsJson.value);
+      if (!jsonDraft || jsonApplied) setJsonStatus("JSONをコピーしました。");
+    } catch {
+      settingsJson.focus();
+      settingsJson.select();
+      setJsonStatus("コピーできませんでした。この欄を選択してコピーしてください。", settingsJson.getAttribute("aria-invalid") === "true");
+    }
+  });
   elementScaleNumber.addEventListener("change", () => {
     if (elementScaleNumber.value === "") syncScaleControls();
     else updateScale(elementScaleNumber, true);
@@ -399,13 +623,13 @@
       else updatePosition(number, true);
     });
   }
-  byId("resetPositionButton").addEventListener("click", () => resetPositions(positionTarget.value));
-  byId("resetAllPositionsButton").addEventListener("click", () => resetPositions());
-  byId("resetScaleButton").addEventListener("click", () => resetScales(positionTarget.value));
-  byId("resetAllScalesButton").addEventListener("click", () => resetScales());
+  byId("resetPositionButton").addEventListener("click", () => { settingsChanged(); resetPositions(positionTarget.value); });
+  byId("resetAllPositionsButton").addEventListener("click", () => { settingsChanged(); resetPositions(); });
+  byId("resetScaleButton").addEventListener("click", () => { settingsChanged(); resetScales(positionTarget.value); });
+  byId("resetAllScalesButton").addEventListener("click", () => { settingsChanged(); resetScales(); });
   uploadButton.addEventListener("click", () => logoFile.click());
   logoFile.addEventListener("change", () => loadLogo(logoFile.files[0]));
-  byId("removeLogoButton").addEventListener("click", () => { clearLogo(); setFeedback(); });
+  byId("removeLogoButton").addEventListener("click", () => { settingsChanged(); clearLogo(); setFeedback(); });
   for (const eventName of ["dragenter", "dragover"]) {
     uploadButton.addEventListener(eventName, (event) => {
       event.preventDefault();
@@ -425,6 +649,7 @@
 
   byId("resetButton").addEventListener("click", () => {
     if (!window.confirm("文面・ロゴ・文字スタイル・位置・大きさを初期状態に戻しますか？")) return;
+    settingsChanged();
     form.reset();
     resetPositions();
     resetScales();

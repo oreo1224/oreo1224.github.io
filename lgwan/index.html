@@ -179,6 +179,19 @@
             </div>
             <p class="field-hint">紙の外にはみ出した部分は印刷されません。</p>
           </div>
+          <div class="editor-section json-section">
+            <div class="section-label"><span class="step-number">05</span><h2>JSONで保存・復元</h2></div>
+            <label class="visually-hidden" for="settingsJson">掲示物の設定JSON</label>
+            <p id="jsonHint" class="field-hint">編集内容をリアルタイム表示。JSONを編集・貼り付けすると、正しい形式になった時点で自動反映します。</p>
+            <textarea id="settingsJson" rows="12" wrap="off" spellcheck="false" autocapitalize="off" autocorrect="off" aria-describedby="jsonHint jsonStatus" aria-invalid="false"></textarea>
+            <label class="json-logo-option" for="includeLogoJson"><input id="includeLogoJson" type="checkbox">ロゴ画像もJSONに含める</label>
+            <p class="field-hint">画像を含めないJSONは、読み込み時に現在のロゴを維持します。</p>
+            <div class="json-actions">
+              <button id="copyJsonButton" class="button-text" type="button">JSONをコピー</button>
+              <button id="refreshJsonButton" class="button-text" type="button">現在の設定を表示</button>
+            </div>
+            <p id="jsonStatus" class="json-status" role="status" aria-live="polite">編集内容をJSONで表示しています。</p>
+          </div>
           <p class="fixed-note"><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>「（本物）」の文言と矢印の形は固定です。</p>
         </form>
         <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
