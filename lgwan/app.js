@@ -265,6 +265,27 @@
     }
   }
 
+  function setPosterText(textElement, value, tildeShift = 0.335) {
+    if (!value.includes("~")) {
+      textElement.textContent = value;
+      return;
+    }
+    // The bundled fonts place ASCII tilde near the cap line. Lower only that
+    // glyph to the digit center, then restore the baseline for the next run.
+    // Keep the original character in both the SVG and the editable JSON.
+    const fragment = document.createDocumentFragment();
+    let lowered = false;
+    for (const run of value.match(/~+|[^~]+/g)) {
+      const span = document.createElementNS(svgNamespace, "tspan");
+      const isTilde = run.startsWith("~");
+      span.textContent = run;
+      if (isTilde !== lowered) span.setAttribute("dy", `${isTilde ? tildeShift : -tildeShift}em`);
+      fragment.append(span);
+      lowered = isTilde;
+    }
+    textElement.replaceChildren(fragment);
+  }
+
   function getRainbowLines() {
     return rainbowInput.value.replace(/\r\n?/g, "\n").split("\n");
   }
@@ -430,7 +451,7 @@
       text.style.whiteSpace = "pre";
       const originalSpacing = lineIndex === 0 && /^[a-zA-Z\d\s]+$/.test(line) ? 12 : 0;
       text.setAttribute("letter-spacing", String(originalSpacing + spacingAdjustment));
-      text.textContent = line;
+      setPosterText(text, line, usePop ? 0.348 : (rainbowBold.checked ? 0.335 : 0.338));
       rainbowGroup.append(text);
       fitText(text, lineIndex === 1 ? 668 : 568);
       // Clip paths require direct text children; a use pointing to a group is
@@ -447,7 +468,7 @@
     renderRainbow();
     for (const [inputId, outputId] of bindings) {
       const text = byId(outputId);
-      text.textContent = byId(inputId).value;
+      setPosterText(text, byId(inputId).value, outputId === "dontText" ? 0.389 : 0.335);
       text.setAttribute("xml:space", "preserve");
       text.style.whiteSpace = "pre";
       // A slight horizontal compression matches the tall, compact warning copy.
@@ -455,14 +476,11 @@
       text.style.color = text.getAttribute("fill");
       fitText(text, 966);
     }
-    // A thin white halo sits behind solid black text. Keeping the stroke in a
-    // separate layer prevents it from cutting into the foreground glyphs.
+    // An outer dark edge keeps the white outline visible on the white paper.
     const outline = byId("useText").cloneNode(true);
     outline.removeAttribute("id");
-    outline.setAttribute("fill", "none");
-    outline.setAttribute("stroke", "#ffffff");
-    outline.setAttribute("stroke-width", "1.2");
-    outline.setAttribute("stroke-linejoin", "round");
+    outline.setAttribute("stroke", "#20212b");
+    outline.setAttribute("stroke-width", "4.8");
     byId("useOutline").replaceChildren(outline);
     renderPositions();
     syncJsonOutput();
