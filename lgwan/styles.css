@@ -15,6 +15,14 @@
 }
 
 @font-face {
+  font-family: "Poster Heavy Gothic";
+  src: url("./assets/fonts/HGPSoeiKakugothicUB.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Poster Gothic";
   src: url("./assets/fonts/BIZUDPGothic-Regular.woff") format("woff");
   font-weight: 400;
@@ -100,6 +108,8 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
 .bold-toggle { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; cursor: pointer; color: #5b6980; font-size: 13px; }
 .bold-toggle > span:first-child { display: flex; align-items: center; gap: 8px; }
 .bold-toggle b { font-family: Arial, sans-serif; font-size: 16px; color: #475873; }
+.bold-toggle .italic-symbol { font-style: italic; }
+.letter-spacing-control .field-hint { line-height: 1.7; }
 .switch-control { position: relative; display: block; width: 38px; height: 22px; flex: 0 0 auto; }
 .switch-control input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
 .switch-track { display: block; width: 100%; height: 100%; border-radius: 12px; background: #c7d1df; transition: background .15s; }
@@ -143,6 +153,7 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
 #poster { display: block; width: 100%; height: 100%; overflow: hidden; }
 .poster-font { font-family: "Poster Gothic", "MS PGothic", "ＭＳ Ｐゴシック", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
 .rainbow-pop { font-family: "Poster Pop", "Poster Gothic", sans-serif; font-synthesis: weight; }
+.poster-heavy-gothic { font-family: "Poster Heavy Gothic", "Poster Gothic", sans-serif; font-weight: 900; font-synthesis: none; }
 .poster-body { stroke-width: .45px; stroke: currentColor; paint-order: stroke fill; }
 .poster-body text { color: inherit; }
 .preview-caption { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 9px; font-weight: 600; letter-spacing: .18em; color: #8b9cb1; margin-top: 24px; }

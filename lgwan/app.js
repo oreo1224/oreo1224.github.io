@@ -5,6 +5,9 @@
   const form = byId("posterForm");
   const rainbowInput = byId("rainbowInput");
   const rainbowBold = byId("rainbowBold");
+  const rainbowItalic = byId("rainbowItalic");
+  const rainbowSpacing = byId("rainbowSpacing");
+  const rainbowSpacingNumber = byId("rainbowSpacingNumber");
   const rainbowFont = byId("rainbowFont");
   const fontStatus = byId("fontStatus");
   const rainbowGroup = byId("rainbowText");
@@ -24,6 +27,7 @@
     rainbow: "rainbowPosition",
     logo: "posterLogo",
     genuine: "genuinePosition",
+    arrow: "fixedArrow",
     use: "usePosition",
     stop: "stopPosition",
     dont: "dontPosition",
@@ -151,10 +155,24 @@
     scheduleRender();
   }
 
+  function updateRainbowSpacing(control, normalizeNumber = false) {
+    if (control.value === "") return;
+    const value = Number(control.value);
+    if (!Number.isFinite(value)) return;
+    const amount = Math.round(Math.max(-2, Math.min(5, value)) * 10) / 10;
+    rainbowSpacing.value = String(amount);
+    rainbowSpacing.setAttribute("aria-valuetext", `${amount} mm`);
+    if (control === rainbowSpacing || normalizeNumber) rainbowSpacingNumber.value = String(amount);
+    scheduleRender();
+  }
+
   function renderRainbow() {
     const lines = getRainbowLines();
     syncRainbowPositionChoices(Math.min(6, lines.length));
     const weight = rainbowBold.checked ? "700" : "400";
+    const slant = rainbowItalic.checked ? " skewX(-12)" : "";
+    const spacingAdjustment = Number(rainbowSpacing.value) * unitsPerMm.x;
+    rainbowSpacing.setAttribute("aria-valuetext", `${rainbowSpacing.value} mm`);
     // The fill clip and shadow must use the same actual font weight.
     rainbowGroup.setAttribute("font-weight", weight);
     rainbowClip.setAttribute("font-weight", weight);
@@ -175,12 +193,13 @@
       text.setAttribute("x", "0");
       text.setAttribute("y", "0");
       // Shear around each baseline so the slant cannot drift across lines.
-      text.setAttribute("transform", `translate(${center + offset.x * unitsPerMm.x} ${baseline + offset.y * unitsPerMm.y}) skewX(-12)`);
+      text.setAttribute("transform", `translate(${center + offset.x * unitsPerMm.x} ${baseline + offset.y * unitsPerMm.y})${slant}`);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("font-size", String(fontSize));
       text.setAttribute("xml:space", "preserve");
       text.style.whiteSpace = "pre";
-      if (lineIndex === 0 && /^[a-zA-Z\d\s]+$/.test(line)) text.setAttribute("letter-spacing", "12");
+      const originalSpacing = lineIndex === 0 && /^[a-zA-Z\d\s]+$/.test(line) ? 12 : 0;
+      text.setAttribute("letter-spacing", String(originalSpacing + spacingAdjustment));
       text.textContent = line;
       rainbowGroup.append(text);
       fitText(text, lineIndex === 1 ? 668 : 568);
@@ -291,6 +310,10 @@
 
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
+    if (event.target === rainbowSpacing || event.target === rainbowSpacingNumber) {
+      updateRainbowSpacing(event.target);
+      return;
+    }
     if (event.target === positionTarget) {
       syncPositionControls();
       return;
@@ -307,6 +330,10 @@
     scheduleRender();
   });
   positionTarget.addEventListener("change", syncPositionControls);
+  rainbowSpacingNumber.addEventListener("change", () => {
+    if (rainbowSpacingNumber.value === "") rainbowSpacingNumber.value = rainbowSpacing.value;
+    else updateRainbowSpacing(rainbowSpacingNumber, true);
+  });
   for (const [, number] of Object.values(positionControls)) {
     number.addEventListener("change", () => {
       if (number.value === "") syncPositionControls();
@@ -336,7 +363,7 @@
   document.addEventListener("drop", (event) => event.preventDefault());
 
   byId("resetButton").addEventListener("click", () => {
-    if (!window.confirm("文面・ロゴ・位置を初期状態に戻しますか？")) return;
+    if (!window.confirm("文面・ロゴ・文字スタイル・位置を初期状態に戻しますか？")) return;
     form.reset();
     resetPositions();
     clearLogo();
