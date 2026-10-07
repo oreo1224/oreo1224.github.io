@@ -125,8 +125,8 @@
             </div>
           </div>
           <div class="editor-section position-section">
-            <div class="section-label"><span class="step-number">04</span><h2>位置調整</h2></div>
-            <label for="positionTarget">動かす対象</label>
+            <div class="section-label"><span class="step-number">04</span><h2>位置・大きさ</h2></div>
+            <label for="positionTarget">調整する対象</label>
             <select id="positionTarget" aria-describedby="positionHint">
               <option value="rainbow">虹文字全体</option>
               <optgroup id="rainbowLineTargets" label="虹文字を1行ずつ">
@@ -163,6 +163,19 @@
             <div class="position-reset-actions">
               <button id="resetPositionButton" class="button-text" type="button">この対象を元の位置へ</button>
               <button id="resetAllPositionsButton" class="button-text" type="button">全位置を戻す</button>
+            </div>
+            <div class="position-axis">
+              <div class="axis-heading">
+                <label for="elementScale">大きさ <span>スケール</span></label>
+                <span class="position-value"><input id="elementScaleNumber" type="number" min="25" max="200" step="1" value="100" aria-label="選択した対象の大きさ（%）"><span>%</span></span>
+              </div>
+              <input id="elementScale" type="range" min="25" max="200" step="1" value="100" aria-label="選択した対象の大きさ" aria-valuetext="100%" aria-describedby="scaleHint">
+              <div class="axis-scale" aria-hidden="true"><span>25%</span><span>200%</span></div>
+              <div class="position-reset-actions">
+                <button id="resetScaleButton" class="button-text" type="button">大きさを100%に戻す</button>
+                <button id="resetAllScalesButton" class="button-text" type="button">全サイズを戻す</button>
+              </div>
+              <p id="scaleHint" class="field-hint">100%が元の大きさ。虹文字全体と各行の倍率は掛け合わせます。</p>
             </div>
             <p class="field-hint">紙の外にはみ出した部分は印刷されません。</p>
           </div>
@@ -202,7 +215,7 @@
                 <rect width="1122.52" height="793.7" fill="#ffffff"/>
                 <image id="posterLogo" x="872" y="35" width="196" height="70" preserveAspectRatio="xMidYMid meet" visibility="hidden"/>
                 <g id="rainbowPosition">
-                  <use id="rainbowShadow" href="#rainbowText" transform="translate(2.2 2.8)" fill="#383838" opacity="0.24" aria-hidden="true"/>
+                  <g id="rainbowShadow" class="poster-font" font-weight="700" fill="#383838" opacity="0.24" aria-hidden="true"></g>
                   <rect id="rainbowFill" x="-1122.52" y="-793.7" width="3367.56" height="2381.1" fill="url(#posterRainbow)" clip-path="url(#rainbowClip)"/>
                 </g>
                 <path id="fixedArrow" fill="#c71930" d="M807 297 H950 V254 L1043 338 L950 422 V379 H807 Z"/>

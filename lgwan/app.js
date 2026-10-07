@@ -12,6 +12,7 @@
   const fontStatus = byId("fontStatus");
   const rainbowGroup = byId("rainbowText");
   const rainbowClip = byId("rainbowClip");
+  const rainbowShadow = byId("rainbowShadow");
   const printButton = byId("printButton");
   const logoFile = byId("logoFile");
   const uploadButton = byId("uploadButton");
@@ -23,6 +24,8 @@
     x: [byId("positionX"), byId("positionXNumber")],
     y: [byId("positionY"), byId("positionYNumber")],
   };
+  const elementScale = byId("elementScale");
+  const elementScaleNumber = byId("elementScaleNumber");
   const positionElements = {
     rainbow: "rainbowPosition",
     logo: "posterLogo",
@@ -37,6 +40,19 @@
     [...Object.keys(positionElements), ...Array.from({ length: 6 }, (_, index) => `rainbowLine${index}`)]
       .map((key) => [key, { x: 0, y: 0 }]),
   );
+  const scales = Object.fromEntries(Object.keys(positions).map((key) => [key, 100]));
+  // Keep XY offsets independent of scaling. Text rows scale around their
+  // baseline anchor; badges, images, and the rainbow block around their center.
+  const scaleAnchors = {
+    rainbow: [400, 275],
+    logo: [970, 70],
+    genuine: [600, 485.5],
+    arrow: [925, 338],
+    use: [78, 584],
+    stop: [78, 632],
+    dont: [78, 695],
+    bottom: [78, 747],
+  };
   const unitsPerMm = { x: 1122.52 / 297, y: 793.7 / 210 };
   const svgNamespace = "http://www.w3.org/2000/svg";
   const bindings = [
@@ -108,6 +124,32 @@
       for (const control of controls) control.value = String(position[axis]);
       controls[0].setAttribute("aria-valuetext", `${position[axis]} mm`);
     }
+    syncScaleControls();
+  }
+
+  function syncScaleControls() {
+    const amount = scales[positionTarget.value];
+    elementScale.value = String(amount);
+    elementScaleNumber.value = String(amount);
+    elementScale.setAttribute("aria-valuetext", `${amount}%`);
+  }
+
+  function updateScale(control, normalizeNumber = false) {
+    if (control.value === "") return;
+    const value = Number(control.value);
+    if (!Number.isFinite(value)) return;
+    const amount = Math.round(Math.max(25, Math.min(200, value)));
+    scales[positionTarget.value] = amount;
+    elementScale.value = String(amount);
+    elementScale.setAttribute("aria-valuetext", `${amount}%`);
+    if (control === elementScale || normalizeNumber) elementScaleNumber.value = String(amount);
+    scheduleRender();
+  }
+
+  function resetScales(target) {
+    for (const key of target ? [target] : Object.keys(scales)) scales[key] = 100;
+    syncScaleControls();
+    scheduleRender();
   }
 
   function syncRainbowPositionChoices(lineCount) {
@@ -143,7 +185,8 @@
   function renderPositions() {
     for (const [target, elementId] of Object.entries(positionElements)) {
       const { x, y } = positions[target];
-      byId(elementId).setAttribute("transform", `translate(${(x * unitsPerMm.x).toFixed(3)} ${(y * unitsPerMm.y).toFixed(3)})`);
+      const [anchorX, anchorY] = scaleAnchors[target];
+      byId(elementId).setAttribute("transform", `translate(${(x * unitsPerMm.x).toFixed(3)} ${(y * unitsPerMm.y).toFixed(3)}) translate(${anchorX} ${anchorY}) scale(${scales[target] / 100}) translate(${-anchorX} ${-anchorY})`);
     }
   }
 
@@ -176,11 +219,14 @@
     // The fill clip and shadow must use the same actual font weight.
     rainbowGroup.setAttribute("font-weight", weight);
     rainbowClip.setAttribute("font-weight", weight);
+    rainbowShadow.setAttribute("font-weight", weight);
     const usePop = rainbowFont.value === "pop" && popFontAvailable;
     rainbowGroup.classList.toggle("rainbow-pop", usePop);
     rainbowClip.classList.toggle("rainbow-pop", usePop);
+    rainbowShadow.classList.toggle("rainbow-pop", usePop);
     rainbowGroup.replaceChildren();
     rainbowClip.replaceChildren();
+    rainbowShadow.replaceChildren();
     // Four lines keep the reference layout; extra lines share the same safe area.
     const lineCount = Math.max(4, Math.min(6, lines.length));
     const lineHeight = 330 / lineCount;
@@ -190,10 +236,11 @@
       const center = lineIndex === 1 ? 422 : 366;
       const baseline = 160 + lineIndex * lineHeight;
       const offset = positions[`rainbowLine${lineIndex}`];
+      const scale = scales[`rainbowLine${lineIndex}`] / 100;
       text.setAttribute("x", "0");
       text.setAttribute("y", "0");
       // Shear around each baseline so the slant cannot drift across lines.
-      text.setAttribute("transform", `translate(${center + offset.x * unitsPerMm.x} ${baseline + offset.y * unitsPerMm.y})${slant}`);
+      text.setAttribute("transform", `translate(${center + offset.x * unitsPerMm.x} ${baseline + offset.y * unitsPerMm.y}) scale(${scale})${slant}`);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("font-size", String(fontSize));
       text.setAttribute("xml:space", "preserve");
@@ -206,6 +253,10 @@
       // Clip paths require direct text children; a use pointing to a group is
       // not a valid clipping shape in Chromium. Clone the fitted glyph geometry.
       rainbowClip.append(text.cloneNode(true));
+      // Scale the shadow offset with each line as well as its glyph geometry.
+      const shadow = text.cloneNode(true);
+      shadow.setAttribute("transform", `translate(${2.2 * scale} ${2.8 * scale}) ${text.getAttribute("transform")}`);
+      rainbowShadow.append(shadow);
     });
   }
 
@@ -310,6 +361,10 @@
 
   form.addEventListener("submit", (event) => event.preventDefault());
   form.addEventListener("input", (event) => {
+    if (event.target === elementScale || event.target === elementScaleNumber) {
+      updateScale(event.target);
+      return;
+    }
     if (event.target === rainbowSpacing || event.target === rainbowSpacingNumber) {
       updateRainbowSpacing(event.target);
       return;
@@ -330,6 +385,10 @@
     scheduleRender();
   });
   positionTarget.addEventListener("change", syncPositionControls);
+  elementScaleNumber.addEventListener("change", () => {
+    if (elementScaleNumber.value === "") syncScaleControls();
+    else updateScale(elementScaleNumber, true);
+  });
   rainbowSpacingNumber.addEventListener("change", () => {
     if (rainbowSpacingNumber.value === "") rainbowSpacingNumber.value = rainbowSpacing.value;
     else updateRainbowSpacing(rainbowSpacingNumber, true);
@@ -342,6 +401,8 @@
   }
   byId("resetPositionButton").addEventListener("click", () => resetPositions(positionTarget.value));
   byId("resetAllPositionsButton").addEventListener("click", () => resetPositions());
+  byId("resetScaleButton").addEventListener("click", () => resetScales(positionTarget.value));
+  byId("resetAllScalesButton").addEventListener("click", () => resetScales());
   uploadButton.addEventListener("click", () => logoFile.click());
   logoFile.addEventListener("change", () => loadLogo(logoFile.files[0]));
   byId("removeLogoButton").addEventListener("click", () => { clearLogo(); setFeedback(); });
@@ -363,9 +424,10 @@
   document.addEventListener("drop", (event) => event.preventDefault());
 
   byId("resetButton").addEventListener("click", () => {
-    if (!window.confirm("文面・ロゴ・文字スタイル・位置を初期状態に戻しますか？")) return;
+    if (!window.confirm("文面・ロゴ・文字スタイル・位置・大きさを初期状態に戻しますか？")) return;
     form.reset();
     resetPositions();
+    resetScales();
     clearLogo();
     validateRainbow();
     setFeedback();
