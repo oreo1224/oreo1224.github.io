@@ -69,6 +69,21 @@
 光ファイバー
 絶対触れるな！</textarea>
             <p id="rainbowHint" class="field-hint">改行で行を分けられます。最大6行。</p>
+            <div class="font-choice">
+              <label for="rainbowFont">フォント</label>
+              <select id="rainbowFont" name="rainbowFont" aria-describedby="fontStatus">
+                <option value="pop" selected>創英角ポップ体（端末のフォント）</option>
+                <option value="gothic">角ゴシック（同梱）</option>
+              </select>
+              <p id="fontStatus" class="field-hint" role="status">創英角ポップ体を確認しています…</p>
+            </div>
+            <label class="bold-toggle" for="rainbowBold">
+              <span><b aria-hidden="true">B</b>太字（Bold）</span>
+              <span class="switch-control">
+                <input id="rainbowBold" name="rainbowBold" type="checkbox" role="switch" aria-label="虹文字を太字にする" checked>
+                <span class="switch-track" aria-hidden="true"></span>
+              </span>
+            </label>
           </div>
 
           <div class="editor-section copy-section">
@@ -114,6 +129,14 @@
                   </linearGradient>
                   <g id="rainbowText" class="poster-font" font-weight="700"></g>
                   <clipPath id="rainbowClip" class="poster-font" font-weight="700" clipPathUnits="userSpaceOnUse"></clipPath>
+                  <linearGradient id="reflectionFade" gradientUnits="userSpaceOnUse" x1="0" y1="638" x2="0" y2="662">
+                    <stop offset="0" stop-color="#ffffff" stop-opacity="0.32"/>
+                    <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.12"/>
+                    <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+                  </linearGradient>
+                  <mask id="stopReflectionMask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="60" y="638" width="1000" height="24">
+                    <rect x="60" y="638" width="1000" height="24" fill="url(#reflectionFade)"/>
+                  </mask>
                 </defs>
                 <rect width="1122.52" height="793.7" fill="#ffffff"/>
                 <image id="posterLogo" x="872" y="35" width="196" height="70" preserveAspectRatio="xMidYMid meet" visibility="hidden"/>
@@ -123,10 +146,14 @@
                 <rect x="492" y="458" width="216" height="55" rx="7" fill="#b81e32"/>
                 <text x="600" y="499" text-anchor="middle" fill="#ffffff" class="poster-font" font-weight="700" font-size="34">（本物）</text>
                 <g class="poster-font poster-body" font-weight="700">
-                  <text id="useText" x="78" y="584" font-size="41" fill="#20212b">34,000名の自治体職員が使用中！！</text>
+                  <g id="useOutline" aria-hidden="true"></g>
+                  <text id="useText" x="78" y="584" font-size="41" fill="#20212b" stroke="#ffffff" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke fill">34,000名の自治体職員が使用中！！</text>
                   <text id="stopText" x="78" y="632" font-size="44" fill="#172b76">全国の市町村業務が 停止する！</text>
                   <text id="dontText" x="78" y="695" font-size="36" fill="#4b2065">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</text>
                   <text id="bottomText" x="78" y="747" font-size="25" fill="#b34c1d">事故したら 460 市町村を廻って いただきます</text>
+                </g>
+                <g id="stopReflection" class="poster-font" font-weight="700" mask="url(#stopReflectionMask)" aria-hidden="true">
+                  <use href="#stopText" transform="translate(0 958) scale(1 -0.5)"/>
                 </g>
               </svg>
             </div>

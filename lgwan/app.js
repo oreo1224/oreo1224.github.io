@@ -4,6 +4,9 @@
   const byId = (id) => document.getElementById(id);
   const form = byId("posterForm");
   const rainbowInput = byId("rainbowInput");
+  const rainbowBold = byId("rainbowBold");
+  const rainbowFont = byId("rainbowFont");
+  const fontStatus = byId("fontStatus");
   const rainbowGroup = byId("rainbowText");
   const rainbowClip = byId("rainbowClip");
   const printButton = byId("printButton");
@@ -22,6 +25,8 @@
   let imageVersion = 0;
   let logoLoading = false;
   let animationFrame = 0;
+  let popFontAvailable = false;
+  let popFontCheck;
 
   function setFeedback(message = "", success = false) {
     feedback.textContent = message;
@@ -49,8 +54,40 @@
     return valid;
   }
 
+  function rainbowFontFamily() {
+    return rainbowFont.value === "pop" && popFontAvailable ? "Poster Pop" : "Poster Gothic";
+  }
+
+  async function loadRainbowFont() {
+    if (rainbowFont.value === "pop") {
+      if (!popFontCheck) {
+        popFontCheck = document.fonts
+          ? document.fonts.load('400 62px "Poster Pop"', "光ファイバー").then((faces) => faces.length > 0, () => false)
+          : Promise.resolve(false);
+      }
+      popFontAvailable = await popFontCheck;
+    }
+    const selectedPop = rainbowFont.value === "pop";
+    fontStatus.textContent = selectedPop
+      ? (popFontAvailable ? "端末にある創英角ポップ体を使用しています。" : "この端末には創英角ポップ体が見つかりません。角ゴシックで表示しています。")
+      : "BIZ UDPゴシックを使用しています。";
+    fontStatus.classList.toggle("font-missing", selectedPop && !popFontAvailable);
+    render();
+    if (document.fonts) {
+      await document.fonts.load(`${rainbowBold.checked ? 700 : 400} 62px "${rainbowFontFamily()}"`);
+      scheduleRender();
+    }
+  }
+
   function renderRainbow() {
     const lines = getRainbowLines();
+    const weight = rainbowBold.checked ? "700" : "400";
+    // The fill clip and shadow must use the same actual font weight.
+    rainbowGroup.setAttribute("font-weight", weight);
+    rainbowClip.setAttribute("font-weight", weight);
+    const usePop = rainbowFont.value === "pop" && popFontAvailable;
+    rainbowGroup.classList.toggle("rainbow-pop", usePop);
+    rainbowClip.classList.toggle("rainbow-pop", usePop);
     rainbowGroup.replaceChildren();
     rainbowClip.replaceChildren();
     // Four lines keep the reference layout; extra lines share the same safe area.
@@ -91,6 +128,12 @@
       text.style.color = text.getAttribute("fill");
       fitText(text, 966);
     }
+    // An outer dark edge keeps the white outline visible on the white paper.
+    const outline = byId("useText").cloneNode(true);
+    outline.removeAttribute("id");
+    outline.setAttribute("stroke", "#20212b");
+    outline.setAttribute("stroke-width", "4.8");
+    byId("useOutline").replaceChildren(outline);
   }
 
   function scheduleRender() {
@@ -177,6 +220,7 @@
       const valid = validateRainbow();
       setFeedback(valid ? "" : "虹色の文面は6行以内にしてください。");
     }
+    if (event.target === rainbowBold || event.target === rainbowFont) loadRainbowFont().catch(scheduleRender);
     scheduleRender();
   });
   uploadButton.addEventListener("click", () => logoFile.click());
@@ -206,6 +250,7 @@
     validateRainbow();
     setFeedback();
     render();
+    loadRainbowFont().catch(scheduleRender);
   });
 
   printButton.addEventListener("click", async () => {
@@ -215,8 +260,8 @@
       rainbowInput.reportValidity();
       return;
     }
+    await loadRainbowFont();
     if (document.fonts) {
-      await document.fonts.load('700 62px "Poster Gothic"');
       await document.fonts.ready;
     }
     cancelAnimationFrame(animationFrame);
@@ -226,5 +271,6 @@
   window.addEventListener("beforeprint", render);
   window.addEventListener("afterprint", scheduleRender);
   render();
+  loadRainbowFont().catch(scheduleRender);
   if (document.fonts) document.fonts.ready.then(scheduleRender);
 })();
