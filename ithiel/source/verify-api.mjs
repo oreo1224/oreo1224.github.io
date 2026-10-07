@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+const source = await readFile('src/gemini-api.js', 'utf8');
+const { geminiRequest, synthesize } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+let outgoing;
+globalThis.fetch = async (url, options) => {
+  outgoing = { url, options };
+  if (url.includes('/voices')) return Response.json({ voices: [{ id: 'voice_test' }], next_page_token: 'page2' });
+  return Response.json({ steps: [{ type: 'model_output', content: [{ type: 'audio', data: 'UklGRg==', mime_type: 'audio/wav' }] }] });
+};
+const catalog = await geminiRequest('voices?language_code=ja-JP&page_token=page1', 'test-only');
+assert.equal(catalog.next_page_token, 'page2');
+assert.equal(outgoing.options.method, 'GET');
+assert.equal(outgoing.options.headers['x-goog-api-key'], 'test-only');
+const audio = await synthesize({ key: 'test-only', model: 'gemini-3.8-flash-lite-tts', voice: 'voice_test', text: 'こんにちは', style: 'warm' });
+assert.equal(audio, 'UklGRg==');
+const body = JSON.parse(outgoing.options.body);
+assert.equal(body.model, 'gemini-3.8-flash-lite-tts');
+assert.equal(body.generation_config.speech_config[0].voice, 'voice_test');
+assert.equal(body.input[0].content[0].annotations[0].style, 'warm');
+await assert.rejects(() => geminiRequest('voices', ''), /APIキー/);
+globalThis.fetch = async () => Response.json({ error: { message: 'API key invalid' } }, { status: 403 });
+await assert.rejects(() => geminiRequest('voices', 'test-only'), /API key invalid/);
+console.log('Direct API catalog, Lite synthesis, voice ID and error handling passed.');
