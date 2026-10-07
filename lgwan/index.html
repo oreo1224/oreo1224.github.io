@@ -7,6 +7,7 @@
     <meta name="color-scheme" content="light">
     <title>掲示物ジェネレーター</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="preload" href="./assets/fonts/BIZUDPGothic-Bold.woff" as="font" type="font/woff" crossorigin>
     <link rel="stylesheet" href="./styles.css">
     <script src="./app.js" defer></script>
   </head>
@@ -100,13 +101,28 @@
           <div class="paper-frame">
             <div class="paper" id="paper">
               <svg id="poster" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1122.52 793.7" role="img" aria-label="編集した掲示物のA4横プレビュー">
+                <defs>
+                  <linearGradient id="posterRainbow" gradientUnits="userSpaceOnUse" x1="78" y1="0" x2="778" y2="0">
+                    <stop offset="0" stop-color="#c62e3d"/>
+                    <stop offset="0.22" stop-color="#c62e3d"/>
+                    <stop offset="0.29" stop-color="#d28c1b"/>
+                    <stop offset="0.39" stop-color="#c3b02b"/>
+                    <stop offset="0.51" stop-color="#468633"/>
+                    <stop offset="0.63" stop-color="#205f68"/>
+                    <stop offset="0.79" stop-color="#253a80"/>
+                    <stop offset="1" stop-color="#702e77"/>
+                  </linearGradient>
+                  <g id="rainbowText" class="poster-font" font-weight="700"></g>
+                  <clipPath id="rainbowClip" class="poster-font" font-weight="700" clipPathUnits="userSpaceOnUse"></clipPath>
+                </defs>
                 <rect width="1122.52" height="793.7" fill="#ffffff"/>
                 <image id="posterLogo" x="872" y="35" width="196" height="70" preserveAspectRatio="xMidYMid meet" visibility="hidden"/>
-                <g id="rainbowText" font-family="'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif" font-weight="900"></g>
+                <use id="rainbowShadow" href="#rainbowText" transform="translate(2.2 2.8)" fill="#383838" opacity="0.24" aria-hidden="true"/>
+                <rect id="rainbowFill" x="60" y="75" width="730" height="380" fill="url(#posterRainbow)" clip-path="url(#rainbowClip)"/>
                 <path id="fixedArrow" fill="#c71930" d="M807 297 H950 V254 L1043 338 L950 422 V379 H807 Z"/>
                 <rect x="492" y="458" width="216" height="55" rx="7" fill="#b81e32"/>
-                <text x="600" y="499" text-anchor="middle" fill="#ffffff" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, sans-serif" font-weight="900" font-size="34">（本物）</text>
-                <g font-family="'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif" font-weight="900">
+                <text x="600" y="499" text-anchor="middle" fill="#ffffff" class="poster-font" font-weight="700" font-size="34">（本物）</text>
+                <g class="poster-font poster-body" font-weight="700">
                   <text id="useText" x="78" y="584" font-size="41" fill="#20212b">34,000名の自治体職員が使用中！！</text>
                   <text id="stopText" x="78" y="632" font-size="44" fill="#172b76">全国の市町村業務が 停止する！</text>
                   <text id="dontText" x="78" y="695" font-size="36" fill="#4b2065">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</text>

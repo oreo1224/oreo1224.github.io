@@ -5,6 +5,7 @@
   const form = byId("posterForm");
   const rainbowInput = byId("rainbowInput");
   const rainbowGroup = byId("rainbowText");
+  const rainbowClip = byId("rainbowClip");
   const printButton = byId("printButton");
   const logoFile = byId("logoFile");
   const uploadButton = byId("uploadButton");
@@ -18,8 +19,6 @@
     ["dontInput", "dontText"],
     ["bottomInput", "bottomText"],
   ];
-  const colors = ["#c83a44", "#d58329", "#b9a22c", "#428342", "#205b73", "#25367b", "#722b78"];
-  const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter("ja", { granularity: "grapheme" }) : null;
   let imageVersion = 0;
   let logoLoading = false;
   let animationFrame = 0;
@@ -28,15 +27,6 @@
     feedback.textContent = message;
     feedback.hidden = !message;
     feedback.classList.toggle("is-success", success);
-  }
-
-  function rainbowColor(position) {
-    const step = position * (colors.length - 1);
-    const index = Math.min(Math.floor(step), colors.length - 2);
-    const fraction = step - index;
-    const start = colors[index].slice(1).match(/.{2}/g).map((part) => parseInt(part, 16));
-    const end = colors[index + 1].slice(1).match(/.{2}/g).map((part) => parseInt(part, 16));
-    return `rgb(${start.map((value, channel) => Math.round(value + (end[channel] - value) * fraction)).join(",")})`;
   }
 
   function fitText(textElement, maxWidth) {
@@ -62,28 +52,30 @@
   function renderRainbow() {
     const lines = getRainbowLines();
     rainbowGroup.replaceChildren();
+    rainbowClip.replaceChildren();
     // Four lines keep the reference layout; extra lines share the same safe area.
-    const lineCount = Math.max(4, lines.length);
+    const lineCount = Math.max(4, Math.min(6, lines.length));
     const lineHeight = 330 / lineCount;
     const fontSize = Math.min(62, lineHeight * 0.82);
     lines.slice(0, 6).forEach((line, lineIndex) => {
       const text = document.createElementNS(svgNamespace, "text");
-      text.setAttribute("x", "422");
-      text.setAttribute("y", String(160 + lineIndex * lineHeight));
+      const center = lineIndex === 1 ? 422 : 366;
+      const baseline = 160 + lineIndex * lineHeight;
+      text.setAttribute("x", "0");
+      text.setAttribute("y", "0");
+      // Shear around each baseline so the slant cannot drift across lines.
+      text.setAttribute("transform", `translate(${center} ${baseline}) skewX(-12)`);
       text.setAttribute("text-anchor", "middle");
       text.setAttribute("font-size", String(fontSize));
       text.setAttribute("xml:space", "preserve");
       text.style.whiteSpace = "pre";
       if (lineIndex === 0 && /^[a-zA-Z\d\s]+$/.test(line)) text.setAttribute("letter-spacing", "12");
-      const letters = segmenter ? Array.from(segmenter.segment(line), ({ segment }) => segment) : Array.from(line);
-      letters.forEach((letter, index) => {
-        const span = document.createElementNS(svgNamespace, "tspan");
-        span.setAttribute("fill", rainbowColor(letters.length <= 1 ? 0 : index / (letters.length - 1)));
-        span.textContent = letter;
-        text.append(span);
-      });
+      text.textContent = line;
       rainbowGroup.append(text);
-      fitText(text, 688);
+      fitText(text, lineIndex === 1 ? 668 : 568);
+      // Clip paths require direct text children; a use pointing to a group is
+      // not a valid clipping shape in Chromium. Clone the fitted glyph geometry.
+      rainbowClip.append(text.cloneNode(true));
     });
   }
 
@@ -94,6 +86,9 @@
       text.textContent = byId(inputId).value;
       text.setAttribute("xml:space", "preserve");
       text.style.whiteSpace = "pre";
+      // A slight horizontal compression matches the tall, compact warning copy.
+      text.setAttribute("transform", "translate(78 0) scale(0.86 1) translate(-78 0)");
+      text.style.color = text.getAttribute("fill");
       fitText(text, 966);
     }
   }
@@ -220,7 +215,10 @@
       rainbowInput.reportValidity();
       return;
     }
-    if (document.fonts) await document.fonts.ready;
+    if (document.fonts) {
+      await document.fonts.load('700 62px "Poster Gothic"');
+      await document.fonts.ready;
+    }
     cancelAnimationFrame(animationFrame);
     render();
     window.print();

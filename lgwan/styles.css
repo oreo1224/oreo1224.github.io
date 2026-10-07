@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Poster Gothic";
+  src: url("./assets/fonts/BIZUDPGothic-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
@@ -89,6 +97,9 @@ textarea[aria-invalid="true"] { border-color: #c54848; }
 .paper-frame { margin: 0 auto; width: 100%; max-width: 1122.52px; aspect-ratio: 297 / 210; }
 .paper { width: 100%; height: 100%; background: #fff; box-shadow: 0 2px 5px #2436550c, 0 18px 32px -16px #24365555; }
 #poster { display: block; width: 100%; height: 100%; }
+.poster-font { font-family: "Poster Gothic", "MS PGothic", "ＭＳ Ｐゴシック", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
+.poster-body { stroke-width: .45px; stroke: currentColor; paint-order: stroke fill; }
+.poster-body text { color: inherit; }
 .preview-caption { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 9px; font-weight: 600; letter-spacing: .18em; color: #8b9cb1; margin-top: 24px; }
 .caption-rule { width: 24px; height: 1px; background: #bdc9d8; }
 .print-note { margin-top: 17px; display: flex; align-items: flex-start; justify-content: center; gap: 8px; color: #8090a7; }
