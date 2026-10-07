@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="ロゴと文面を差し替えて、LGWAN風の掲示物を作成。リアルタイムで確認し、A4横で印刷・PDF保存できます。">
+    <meta name="color-scheme" content="light">
+    <title>掲示物ジェネレーター</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="icon-print" viewBox="0 0 24 24"><path d="M7 8V3h10v5M7 17H4V9h16v8h-3M7 14h10v7H7zM17 11h.01"/></symbol>
+      <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></symbol>
+      <symbol id="icon-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-7 5 8"/></symbol>
+      <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.1 8a7.5 7.5 0 0 1 12.4-2L20 9M4 15l2.5 3A7.5 7.5 0 0 0 18.9 16"/></symbol>
+      <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.01"/></symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></symbol>
+    </svg>
+
+    <header class="app-header">
+      <a class="brand" href="./" aria-label="掲示物ジェネレーター ホーム">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+        <span>掲示物ジェネレーター<small>POSTER STUDIO</small></span>
+      </a>
+      <div class="header-actions">
+        <span class="paper-badge">A4 <span>横向き</span></span>
+        <button id="printButton" class="button button-primary" type="button">
+          <svg class="icon" aria-hidden="true"><use href="#icon-print"/></svg>
+          <span>印刷 / PDF保存</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="editor-panel" aria-labelledby="editorTitle">
+        <div class="panel-heading">
+          <h1 id="editorTitle">掲示物を編集</h1>
+          <button id="resetButton" class="button-text" type="button">
+            <svg class="icon" aria-hidden="true"><use href="#icon-refresh"/></svg>リセット
+          </button>
+        </div>
+        <p class="panel-intro">ロゴと文面を差し替えるだけ。</p>
+
+        <form id="posterForm" autocomplete="off">
+          <div class="editor-section logo-section">
+            <div class="section-label"><span class="step-number">01</span><h2>右上のロゴ</h2><span class="optional-label">任意</span></div>
+            <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden>
+            <button id="uploadButton" class="logo-upload" type="button" aria-label="右上に表示するロゴ画像を選ぶ">
+              <span id="uploadPrompt" class="upload-prompt">
+                <span class="upload-icon"><svg class="icon" aria-hidden="true"><use href="#icon-image"/></svg></span>
+                <strong>画像を選ぶ</strong>
+                <span>またはここにドロップ</span>
+              </span>
+              <img id="logoThumbnail" alt="選択したロゴ" hidden>
+              <span id="replaceLabel" class="replace-label" hidden><svg class="icon" aria-hidden="true"><use href="#icon-upload"/></svg>画像を変更</span>
+            </button>
+            <div class="upload-footer"><span id="logoName">PNG・JPG・WEBP・GIF・SVG</span><button id="removeLogoButton" class="button-text" type="button" hidden>削除</button></div>
+          </div>
+
+          <div class="editor-section">
+            <div class="section-label"><span class="step-number">02</span><h2>虹色の文面</h2><span class="rainbow-swatch" aria-hidden="true"></span></div>
+            <label class="visually-hidden" for="rainbowInput">虹色部分の文面</label>
+            <textarea id="rainbowInput" name="rainbow" rows="4" maxlength="240" spellcheck="false" aria-describedby="rainbowHint">LGWAN
+（総合行政ネットワーク）
+光ファイバー
+絶対触れるな！</textarea>
+            <p id="rainbowHint" class="field-hint">改行で行を分けられます。最大6行。</p>
+          </div>
+
+          <div class="editor-section copy-section">
+            <div class="section-label"><span class="step-number">03</span><h2>下部の文面</h2></div>
+            <div class="field">
+              <label for="useInput"><span class="color-dot dot-black"></span>「使用中！！」の行</label>
+              <input id="useInput" name="use" type="text" value="34,000名の自治体職員が使用中！！" maxlength="120">
+            </div>
+            <div class="field">
+              <label for="stopInput"><span class="color-dot dot-blue"></span>「停止する！」の行</label>
+              <input id="stopInput" name="stop" type="text" value="全国の市町村業務が 停止する！" maxlength="120">
+            </div>
+            <div class="field">
+              <label for="dontInput"><span class="color-dot dot-purple"></span>「曲げるな！！」の行</label>
+              <input id="dontInput" name="dont" type="text" value="絶対に 光ファイバ芯線 抜くな！ 曲げるな！！" maxlength="120">
+            </div>
+            <div class="field">
+              <label for="bottomInput"><span class="color-dot dot-orange"></span>「いただきます」の行</label>
+              <input id="bottomInput" name="bottom" type="text" value="事故したら 460 市町村を廻って いただきます" maxlength="120">
+            </div>
+          </div>
+          <p class="fixed-note"><svg class="icon" aria-hidden="true"><use href="#icon-check"/></svg>「（本物）」と赤い矢印は固定です。</p>
+        </form>
+        <p id="feedback" class="feedback" role="status" aria-live="polite" hidden></p>
+      </section>
+
+      <section class="preview-panel" aria-labelledby="previewTitle">
+        <div class="preview-heading"><h2 id="previewTitle">プレビュー</h2><span>297 × 210 mm</span></div>
+        <div class="preview-stage">
+          <div class="paper-frame">
+            <div class="paper" id="paper">
+              <svg id="poster" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1122.52 793.7" role="img" aria-label="編集した掲示物のA4横プレビュー">
+                <rect width="1122.52" height="793.7" fill="#ffffff"/>
+                <image id="posterLogo" x="872" y="35" width="196" height="70" preserveAspectRatio="xMidYMid meet" visibility="hidden"/>
+                <g id="rainbowText" font-family="'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif" font-weight="900"></g>
+                <path id="fixedArrow" fill="#c71930" d="M807 297 H950 V254 L1043 338 L950 422 V379 H807 Z"/>
+                <rect x="492" y="458" width="216" height="55" rx="7" fill="#b81e32"/>
+                <text x="600" y="499" text-anchor="middle" fill="#ffffff" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, sans-serif" font-weight="900" font-size="34">（本物）</text>
+                <g font-family="'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif" font-weight="900">
+                  <text id="useText" x="78" y="584" font-size="41" fill="#20212b">34,000名の自治体職員が使用中！！</text>
+                  <text id="stopText" x="78" y="632" font-size="44" fill="#172b76">全国の市町村業務が 停止する！</text>
+                  <text id="dontText" x="78" y="695" font-size="36" fill="#4b2065">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</text>
+                  <text id="bottomText" x="78" y="747" font-size="25" fill="#b34c1d">事故したら 460 市町村を廻って いただきます</text>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="preview-caption"><span class="caption-rule"></span>A4 LANDSCAPE<span class="caption-rule"></span></div>
+        </div>
+        <div class="print-note"><svg class="icon" aria-hidden="true"><use href="#icon-info"/></svg><p>印刷設定は<strong>A4・横向き・倍率100%・余白なし</strong>。<br>PDFにする場合は、印刷画面で「PDFに保存」を選んでください。</p></div>
+      </section>
+    </main>
+    <footer class="app-footer">画像はサーバーに送信されません。入力内容はこの画面を閉じると消去されます。</footer>
+    <noscript><p class="noscript-note">文面の編集と印刷にはJavaScriptを有効にしてください。</p></noscript>
+  </body>
+</html>
