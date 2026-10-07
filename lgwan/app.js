@@ -455,11 +455,14 @@
       text.style.color = text.getAttribute("fill");
       fitText(text, 966);
     }
-    // An outer dark edge keeps the white outline visible on the white paper.
+    // A thin white halo sits behind solid black text. Keeping the stroke in a
+    // separate layer prevents it from cutting into the foreground glyphs.
     const outline = byId("useText").cloneNode(true);
     outline.removeAttribute("id");
-    outline.setAttribute("stroke", "#20212b");
-    outline.setAttribute("stroke-width", "4.8");
+    outline.setAttribute("fill", "none");
+    outline.setAttribute("stroke", "#ffffff");
+    outline.setAttribute("stroke-width", "1.2");
+    outline.setAttribute("stroke-linejoin", "round");
     byId("useOutline").replaceChildren(outline);
     renderPositions();
     syncJsonOutput();
