@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LGWAN風 掲示物ジェネレーター</title>
+<style>
+  :root{
+    --paper-w: 297mm;
+    --paper-h: 210mm;
+    --ui-bg: #f3f4f6;
+    --panel: #ffffff;
+    --ink: #111827;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--ui-bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;}
+  body{min-height:100vh}
+  .app{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:20px;padding:20px;align-items:start}
+  .controls{background:var(--panel);border-radius:16px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.08);
+    position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+  .controls h1{font-size:20px;margin:0 0 6px}
+  .controls p{font-size:12px;line-height:1.6;color:#6b7280;margin:0 0 14px}
+  .field{margin:12px 0}
+  .field label{display:block;font-weight:700;font-size:12px;margin-bottom:6px}
+  input[type="text"], textarea, select{
+    width:100%;border:1px solid #d1d5db;border-radius:10px;padding:10px 11px;background:white;font:inherit;
+  }
+  textarea{min-height:72px;resize:vertical}
+  input[type="file"]{width:100%;font-size:12px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+  button{appearance:none;border:0;border-radius:10px;padding:11px 12px;font:inherit;font-weight:800;cursor:pointer}
+  .primary{background:#111827;color:white}
+  .secondary{background:#e5e7eb;color:#111827}
+  .danger{background:#fee2e2;color:#991b1b}
+  .hint{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-size:12px;line-height:1.6;margin-top:12px}
+  .stage-wrap{overflow:auto;padding-bottom:30px}
+  .toolbar{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px;color:#6b7280;font-size:12px}
+  .paper-scale{transform-origin:top center}
+  .paper{
+    width:var(--paper-w);height:var(--paper-h);background:white;position:relative;margin:0 auto;overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,0,0,.16);
+  }
+
+  /* Poster design */
+  .grain{
+    position:absolute;inset:0;pointer-events:none;opacity:.045;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0, rgba(0,0,0,.35) .25mm, transparent .25mm, transparent .8mm);
+    mix-blend-mode:multiply;
+  }
+  .logo-box{
+    position:absolute;right:13mm;top:9mm;width:50mm;height:21mm;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .logo-box img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .logo-placeholder{
+    font-size:4mm;font-weight:900;color:#8b1f2d;letter-spacing:.1mm;text-align:center;line-height:1.15;
+  }
+  .rainbow{
+    position:absolute;left:24mm;top:26mm;width:160mm;
+    transform:rotate(-1.6deg);
+    font-family:"Arial Black","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+    font-weight:1000;letter-spacing:.6mm;line-height:.98;
+    text-shadow:.25mm .25mm 0 rgba(0,0,0,.06);
+  }
+  .rainbow .line{display:block;white-space:pre-wrap}
+  .r1{font-size:13.4mm;color:#d84f3f}
+  .r2{font-size:12.6mm;color:#db9f25;margin-left:9mm}
+  .r3{font-size:13mm;color:#2c8a49;margin-left:22mm}
+  .r4{font-size:12.6mm;color:#1956a6;margin-left:39mm}
+  .r5{font-size:11.8mm;color:#63248d;margin-left:66mm}
+
+  .genuine{
+    position:absolute;left:120mm;top:95mm;width:52mm;height:15mm;
+    background:#a41d23;border-radius:2mm;transform:rotate(-1deg);
+    color:white;font-size:7.2mm;font-weight:1000;display:flex;align-items:center;justify-content:center;
+  }
+  .arrow{
+    position:absolute;left:178mm;top:85mm;width:64mm;height:31mm;
+  }
+  .arrow:before{
+    content:"";position:absolute;left:0;top:7mm;width:34mm;height:17mm;background:#d10d20;
+  }
+  .arrow:after{
+    content:"";position:absolute;right:0;top:0;border-top:15.5mm solid transparent;border-bottom:15.5mm solid transparent;
+    border-left:30mm solid #d10d20;
+  }
+
+  .body-copy{
+    position:absolute;left:20mm;right:18mm;top:121mm;
+    font-family:"Arial Black","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-weight:1000;
+    color:#17213d;line-height:1.08;letter-spacing:.12mm;
+  }
+  .use-row{font-size:8.1mm;margin-bottom:2mm;white-space:pre-wrap}
+  .stop-row{font-size:9.1mm;margin-bottom:4.5mm;white-space:pre-wrap}
+  .dont-row{font-size:7.1mm;color:#28132e;white-space:pre-wrap}
+  .bottom-row{
+    position:absolute;left:21mm;right:20mm;bottom:14mm;
+    font-family:"Arial Black","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;font-size:5.2mm;font-weight:1000;color:#d0563c;
+    white-space:pre-wrap;letter-spacing:.12mm;
+  }
+  .bottom-row::before{content:"▶ ";color:#d7a13d}
+
+  @media (max-width: 1000px){
+    .app{grid-template-columns:1fr}
+    .controls{position:relative;top:auto;max-height:none}
+  }
+
+  @page{size:A4 landscape;margin:0}
+  @media print{
+    html,body{width:297mm;height:210mm;background:white}
+    body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .controls,.toolbar{display:none!important}
+    .app,.stage-wrap{display:block!important;padding:0!important;margin:0!important}
+    .paper-scale{transform:none!important}
+    .paper{width:297mm;height:210mm;margin:0!important;box-shadow:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="controls">
+    <h1>掲示物ジェネレーター</h1>
+    <p>右のA4横プレビューをそのまま印刷できます。画像ロゴと各テキストを差し替えるだけの単ページ構成です。</p>
+
+    <div class="field">
+      <label>右上ロゴ画像</label>
+      <input id="logoInput" type="file" accept="image/*" />
+    </div>
+
+    <div class="field">
+      <label>虹色 1行目</label>
+      <input id="r1Input" type="text" value="LGWAN" />
+    </div>
+    <div class="field">
+      <label>虹色 2行目</label>
+      <input id="r2Input" type="text" value="（総合行政ネットワーク）" />
+    </div>
+    <div class="field">
+      <label>虹色 3行目</label>
+      <input id="r3Input" type="text" value="光ファイバー" />
+    </div>
+    <div class="field">
+      <label>虹色 4行目</label>
+      <input id="r4Input" type="text" value="絶対触れるな！" />
+    </div>
+    <div class="field">
+      <label>虹色 5行目</label>
+      <input id="r5Input" type="text" value="" placeholder="必要なら追加" />
+    </div>
+
+    <div class="field">
+      <label>「使用中！！」の行</label>
+      <input id="useInput" type="text" value="34,000名の自治体職員が使用中！！" />
+    </div>
+    <div class="field">
+      <label>「停止する！」の行</label>
+      <input id="stopInput" type="text" value="全国の市町村業務が 停止する！" />
+    </div>
+    <div class="field">
+      <label>「曲げるな！！」の行</label>
+      <input id="dontInput" type="text" value="絶対に 光ファイバ芯線 抜くな！ 曲げるな！！" />
+    </div>
+    <div class="field">
+      <label>「いただくきます」の行</label>
+      <input id="bottomInput" type="text" value="願いなら 460 市町村を廻って いただくきます" />
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>プレビュー倍率</label>
+        <select id="zoom">
+          <option value="0.55">55%</option>
+          <option value="0.65" selected>65%</option>
+          <option value="0.75">75%</option>
+          <option value="0.85">85%</option>
+          <option value="1">100%</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>ロゴ表示</label>
+        <select id="logoFit">
+          <option value="contain" selected>全体を収める</option>
+          <option value="cover">枠いっぱい</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button class="primary" id="printBtn">A4横で印刷</button>
+      <button class="secondary" id="saveBtn">設定を保存</button>
+      <button class="secondary" id="loadBtn">設定を復元</button>
+      <button class="danger" id="resetBtn">初期化</button>
+    </div>
+
+    <div class="hint">
+      印刷ダイアログでは「A4」「横向き」「余白なし（可能なら）」を選択。背景グラフィックもON推奨です。
+    </div>
+  </aside>
+
+  <main class="stage-wrap">
+    <div class="toolbar">A4 Landscape / 297 × 210 mm</div>
+    <div id="paperScale" class="paper-scale">
+      <section class="paper" id="paper">
+        <div class="logo-box">
+          <div id="logoPlaceholder" class="logo-placeholder">LOGO<br>IMAGE</div>
+          <img id="logoImg" alt="" style="display:none">
+        </div>
+
+        <div class="rainbow">
+          <span id="r1" class="line r1">LGWAN</span>
+          <span id="r2" class="line r2">（総合行政ネットワーク）</span>
+          <span id="r3" class="line r3">光ファイバー</span>
+          <span id="r4" class="line r4">絶対触れるな！</span>
+          <span id="r5" class="line r5"></span>
+        </div>
+
+        <div class="genuine">（本物）</div>
+        <div class="arrow" aria-hidden="true"></div>
+
+        <div class="body-copy">
+          <div id="useRow" class="use-row">34,000名の自治体職員が使用中！！</div>
+          <div id="stopRow" class="stop-row">全国の市町村業務が 停止する！</div>
+          <div id="dontRow" class="dont-row">絶対に 光ファイバ芯線 抜くな！ 曲げるな！！</div>
+        </div>
+
+        <div id="bottomRow" class="bottom-row">願いなら 460 市町村を廻って いただくきます</div>
+        <div class="grain"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const bindings = [
+    ["r1Input","r1"],["r2Input","r2"],["r3Input","r3"],["r4Input","r4"],["r5Input","r5"],
+    ["useInput","useRow"],["stopInput","stopRow"],["dontInput","dontRow"],["bottomInput","bottomRow"]
+  ];
+
+  bindings.forEach(([inputId, outId]) => {
+    $(inputId).addEventListener("input", e => $(outId).textContent = e.target.value);
+  });
+
+  $("logoInput").addEventListener("change", e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      $("logoImg").src = reader.result;
+      $("logoImg").style.display = "block";
+      $("logoPlaceholder").style.display = "none";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  $("logoFit").addEventListener("change", e => {
+    $("logoImg").style.objectFit = e.target.value;
+  });
+
+  const applyZoom = () => {
+    const z = Number($("zoom").value);
+    $("paperScale").style.transform = `scale(${z})`;
+    const h = 210 * z;
+    $("paperScale").style.height = `${h}mm`;
+  };
+  $("zoom").addEventListener("change", applyZoom);
+  applyZoom();
+
+  $("printBtn").addEventListener("click", () => window.print());
+
+  const storageKey = "lgwan-poster-generator-v1";
+  $("saveBtn").addEventListener("click", () => {
+    const data = {};
+    bindings.forEach(([inputId]) => data[inputId] = $(inputId).value);
+    data.zoom = $("zoom").value;
+    data.logoFit = $("logoFit").value;
+    try{
+      const src = $("logoImg").src || "";
+      if (src.startsWith("data:")) data.logo = src;
+      localStorage.setItem(storageKey, JSON.stringify(data));
+      alert("このブラウザに設定を保存しました。");
+    }catch(err){
+      alert("保存できませんでした。画像が大きすぎる可能性があります。");
+    }
+  });
+
+  $("loadBtn").addEventListener("click", () => {
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return alert("保存済み設定がありません。");
+    const data = JSON.parse(raw);
+    bindings.forEach(([inputId, outId]) => {
+      if (typeof data[inputId] === "string"){
+        $(inputId).value = data[inputId];
+        $(outId).textContent = data[inputId];
+      }
+    });
+    if (data.zoom) $("zoom").value = data.zoom;
+    if (data.logoFit) {
+      $("logoFit").value = data.logoFit;
+      $("logoImg").style.objectFit = data.logoFit;
+    }
+    if (data.logo){
+      $("logoImg").src = data.logo;
+      $("logoImg").style.display = "block";
+      $("logoPlaceholder").style.display = "none";
+    }
+    applyZoom();
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    if (!confirm("入力内容を初期状態に戻しますか？")) return;
+    localStorage.removeItem(storageKey);
+    location.reload();
+  });
+})();
+</script>
+</body>
+</html>
