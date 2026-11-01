@@ -5,7 +5,9 @@ import { adminEmail, firebaseConfig } from "../firebase-config.js";
 
 const els = {
   app: document.querySelector("#analytics-app"), loginMessage: document.querySelector("#login-message"), account: document.querySelector("#account-name"), login: document.querySelector("#login-button"), logout: document.querySelector("#logout-button"),
-  terminal: document.querySelector("#terminal-filter"), period: document.querySelector("#period-filter"), csv: document.querySelector("#csv-input"), reload: document.querySelector("#reload-button"), notice: document.querySelector("#notice"),
+  terminals: document.querySelector("#terminal-options"), terminalSummary: document.querySelector("#terminal-selection-summary"), terminalSelectAll: document.querySelector("#terminal-select-all"), terminalClearAll: document.querySelector("#terminal-clear-all"),
+  period: document.querySelector("#period-filter"), dateRange: document.querySelector("#custom-date-range"), startDate: document.querySelector("#start-date"), endDate: document.querySelector("#end-date"), dateError: document.querySelector("#date-range-error"),
+  csv: document.querySelector("#csv-input"), reload: document.querySelector("#reload-button"), notice: document.querySelector("#notice"),
   net: document.querySelector("#net-sales"), count: document.querySelector("#sale-count"), average: document.querySelector("#average-sale"), cancel: document.querySelector("#cancel-sales"),
   daily: document.querySelector("#daily-chart"), hourly: document.querySelector("#hourly-chart"), products: document.querySelector("#product-ranking"), payments: document.querySelector("#payment-breakdown")
 };
@@ -15,10 +17,12 @@ const yen = new Intl.NumberFormat("ja-JP", { style: "currency", currency: "JPY",
 const date = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" });
 let events = [];
 let source = "Firestore";
+// null means all available terminals; an empty Set means no terminals selected.
+let selectedTerminals = null;
 
 function payload(event) { return event.eventType === "DOCUMENT_CONFIRMED" ? event.payload ?? {} : null; }
 function timestamp(event) { const data = event.payload ?? {}; return Number(data.confirmed_at ?? data.clientCreatedAt ?? 0); }
-function terminal(event) { return String(event.payload?.terminal_id ?? "").padStart(3, "0"); }
+function terminal(event) { const value = event.payload?.terminal_id; return value == null || value === "" ? "" : String(value).padStart(3, "0"); }
 function sale(data) { return ["SALE", "CORRECTION_SALE", "CANCEL"].includes(data?.type); }
 function label(type) { return ({ CASH: "現金", EXTERNAL_CREDIT: "クレジット端末", VOUCHER: "引換券", REPLACEMENT_VOUCHER: "代替値引券", CARRYOVER: "打替繰越" })[type] ?? type; }
 
@@ -66,16 +70,65 @@ function parsePosCsv(text) {
   });
 }
 
-function updateTerminalOptions() {
-  const current = els.terminal.value;
-  const terminals = [...new Set(events.map(terminal).filter(Boolean))].sort();
-  els.terminal.replaceChildren(new Option("全端末", "ALL"), ...terminals.map((id) => new Option(`POS ${id}`, id)));
-  els.terminal.value = terminals.includes(current) ? current : "ALL";
+function updateTerminalSummary() {
+  const total = els.terminals.querySelectorAll('input[type="checkbox"]').length;
+  const selected = selectedTerminals === null ? total : selectedTerminals.size;
+  els.terminalSummary.textContent = !total ? "対象端末なし" : selected === total ? `全${total}端末を選択中` : `${selected} / ${total}端末を選択中`;
+}
+function updateTerminalOptions(resetSelection = false) {
+  if (resetSelection) selectedTerminals = null;
+  const terminalIds = [...new Set(events.map(terminal).filter(Boolean))].sort();
+  if (selectedTerminals !== null) {
+    selectedTerminals = new Set([...selectedTerminals].filter((id) => terminalIds.includes(id)));
+  }
+  if (!terminalIds.length) {
+    const empty = document.createElement("span");
+    empty.className = "filter-empty";
+    empty.textContent = "端末データがありません";
+    els.terminals.replaceChildren(empty);
+  } else {
+    els.terminals.replaceChildren(...terminalIds.map((id) => {
+      const option = document.createElement("label");
+      option.className = "terminal-checkbox";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.value = id;
+      checkbox.checked = selectedTerminals === null || selectedTerminals.has(id);
+      const name = document.createElement("span");
+      name.textContent = `POS ${id}`;
+      option.append(checkbox, name);
+      return option;
+    }));
+  }
+  updateTerminalSummary();
+}
+function dateBoundary(value, nextDay = false) {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day + (nextDay ? 1 : 0)).getTime();
 }
 function filtered() {
-  const selectedTerminal = els.terminal.value; const selectedPeriod = els.period.value; const now = Date.now();
-  const cutoff = selectedPeriod === "TODAY" ? new Date().setHours(0, 0, 0, 0) : selectedPeriod === "7D" ? now - 7 * 86_400_000 : selectedPeriod === "30D" ? now - 30 * 86_400_000 : 0;
-  return events.filter((event) => selectedTerminal === "ALL" || terminal(event) === selectedTerminal).filter((event) => !cutoff || timestamp(event) >= cutoff);
+  const selectedPeriod = els.period.value;
+  const custom = selectedPeriod === "CUSTOM";
+  const startDate = els.startDate.value;
+  const endDate = els.endDate.value;
+  const invalidRange = custom && startDate && endDate && startDate > endDate;
+  els.dateError.hidden = !invalidRange;
+  if (invalidRange) return [];
+
+  const now = Date.now();
+  const cutoff = custom ? dateBoundary(startDate)
+    : selectedPeriod === "TODAY" ? new Date().setHours(0, 0, 0, 0)
+    : selectedPeriod === "7D" ? now - 7 * 86_400_000
+    : selectedPeriod === "30D" ? now - 30 * 86_400_000 : null;
+  // The end date is inclusive: use the start of the following local day as an exclusive bound.
+  const endExclusive = custom ? dateBoundary(endDate, true) : null;
+  return events.filter((event) => {
+    const time = timestamp(event);
+    return (selectedTerminals === null || selectedTerminals.has(terminal(event)))
+      && (cutoff === null || time >= cutoff)
+      && (endExclusive === null || time < endExclusive);
+  });
 }
 function accumulate(records) {
   const total = { net: 0, sales: 0, cancel: 0, daily: new Map(), hourly: new Map(), products: new Map(), payments: new Map() };
@@ -83,7 +136,9 @@ function accumulate(records) {
     const data = payload(event); if (!sale(data)) return;
     const amount = Number(data.total_yen ?? 0); const time = timestamp(event);
     total.net += amount; if (data.type === "CANCEL") total.cancel += amount; else total.sales += 1;
-    const day = date.format(time); total.daily.set(day, (total.daily.get(day) ?? 0) + amount);
+    const completed = new Date(time);
+    const day = [completed.getFullYear(), String(completed.getMonth() + 1).padStart(2, "0"), String(completed.getDate()).padStart(2, "0")].join("-");
+    total.daily.set(day, (total.daily.get(day) ?? 0) + amount);
     const hour = new Date(time).getHours(); total.hourly.set(hour, (total.hourly.get(hour) ?? 0) + amount);
     (data.lines ?? []).forEach((line) => { const name = line.product_name ?? line.productName ?? "名称未設定"; const quantity = Number(line.quantity ?? 0); const lineTotal = Number(line.line_total_yen ?? line.unit_price_yen ?? line.price_yen ?? 0) * (line.line_total_yen == null ? quantity : 1); const current = total.products.get(name) ?? { quantity: 0, amount: 0 }; current.quantity += quantity; current.amount += lineTotal; total.products.set(name, current); });
     (data.payments ?? []).forEach((payment) => total.payments.set(payment.type ?? "OTHER", (total.payments.get(payment.type ?? "OTHER") ?? 0) + Number(payment.amount_yen ?? 0)));
@@ -98,7 +153,7 @@ function renderBars(element, entries, maxCount = 10) {
 function render() {
   const records = filtered(); const data = accumulate(records);
   els.net.textContent = yen.format(data.net); els.count.textContent = `${data.sales}件`; els.average.textContent = yen.format(data.sales ? data.net / data.sales : 0); els.cancel.textContent = yen.format(data.cancel);
-  renderBars(els.daily, [...data.daily.entries()], 14); renderBars(els.hourly, [...data.hourly.entries()].sort(([a], [b]) => a - b).map(([hour, amount]) => [`${hour}時`, amount]), 24);
+  renderBars(els.daily, [...data.daily.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([day, amount]) => [date.format(new Date(`${day}T12:00:00`)), amount]), 14); renderBars(els.hourly, [...data.hourly.entries()].sort(([a], [b]) => a - b).map(([hour, amount]) => [`${hour}時`, amount]), 24);
   els.products.replaceChildren(); const ranked = [...data.products.entries()].filter(([, value]) => value.quantity || value.amount).sort(([, a], [, b]) => b.amount - a.amount).slice(0, 10);
   if (!ranked.length) els.products.innerHTML = "<li class=\"muted\">該当する商品がありません。</li>";
   ranked.forEach(([name, value]) => { const item = document.createElement("li"); item.innerHTML = `<strong>${name}</strong><span>${value.quantity}点　${yen.format(value.amount)}</span>`; els.products.append(item); });
@@ -135,10 +190,25 @@ async function importCsv(file) {
   try {
     const imported = parsePosCsv(await file.text());
     if (!imported.length) throw new Error("CSV内に集計対象の伝票がありません。");
-    events = imported; source = `端末CSV（${file.name}）`; updateTerminalOptions(); render();
+    events = imported; source = `端末CSV（${file.name}）`; updateTerminalOptions(true); render();
   } catch (error) { els.notice.textContent = `CSVを読み込めませんでした：${error.message}`; }
   finally { els.csv.value = ""; }
 }
 els.login.onclick = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { els.notice.textContent = `Googleログインに失敗しました：${error.message}`; } };
-els.logout.onclick = () => signOut(auth); els.terminal.onchange = render; els.period.onchange = render; els.reload.onclick = load; els.csv.onchange = () => importCsv(els.csv.files[0]);
+els.logout.onclick = () => signOut(auth);
+els.terminals.onchange = (event) => {
+  if (!event.target.matches('input[type="checkbox"]')) return;
+  const options = [...els.terminals.querySelectorAll('input[type="checkbox"]')];
+  const checked = options.filter((option) => option.checked).map((option) => option.value);
+  selectedTerminals = checked.length === options.length ? null : new Set(checked);
+  updateTerminalSummary();
+  render();
+};
+els.terminalSelectAll.onclick = () => { selectedTerminals = null; els.terminals.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = true; }); updateTerminalSummary(); render(); };
+els.terminalClearAll.onclick = () => { selectedTerminals = new Set(); els.terminals.querySelectorAll('input[type="checkbox"]').forEach((input) => { input.checked = false; }); updateTerminalSummary(); render(); };
+els.period.onchange = () => { els.dateRange.hidden = els.period.value !== "CUSTOM"; render(); };
+els.startDate.onchange = render;
+els.endDate.onchange = render;
+els.reload.onclick = load;
+els.csv.onchange = () => importCsv(els.csv.files[0]);
 onAuthStateChanged(auth, (user) => { const admin = user?.email?.toLocaleLowerCase() === adminEmail.toLocaleLowerCase(); els.account.textContent = user?.email ?? "ログインしていません"; els.login.hidden = Boolean(user); els.logout.hidden = !user; els.app.hidden = !admin; els.loginMessage.hidden = admin; if (admin) load(); else if (user) els.notice.textContent = "このアカウントには閲覧権限がありません。"; });
