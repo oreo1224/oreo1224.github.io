@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { collection, getDocs, getFirestore, limit, orderBy, query } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, getDocs, getFirestore, limit, orderBy, query, startAfter } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { adminEmail, firebaseConfig } from "../firebase-config.js";
 
 const els = {
@@ -109,7 +109,23 @@ function render() {
 }
 async function load() {
   els.reload.disabled = true; els.notice.textContent = "売上データを読み込み中…";
-  try { const snapshot = await getDocs(query(collection(db, "sync_events"), orderBy("clientCreatedAt", "desc"), limit(500))); events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })); source = "Firestore（直近500件）"; updateTerminalOptions(); render(); }
+  try {
+    const loaded = [];
+    let lastDocument = null;
+    for (const pageSize of [200, 200, 100]) {
+      const constraints = [orderBy("clientCreatedAt", "desc")];
+      if (lastDocument) constraints.push(startAfter(lastDocument));
+      constraints.push(limit(pageSize));
+      const snapshot = await getDocs(query(collection(db, "sync_events"), ...constraints));
+      loaded.push(...snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      if (snapshot.size < pageSize) break;
+      lastDocument = snapshot.docs[snapshot.docs.length - 1];
+    }
+    events = loaded;
+    source = "Firestore（直近最大500件）";
+    updateTerminalOptions();
+    render();
+  }
   catch (error) { els.notice.textContent = `売上データを読み込めませんでした：${error.message}`; }
   finally { els.reload.disabled = false; }
 }
