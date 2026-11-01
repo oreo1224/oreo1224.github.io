@@ -109,7 +109,7 @@ function render() {
 }
 async function load() {
   els.reload.disabled = true; els.notice.textContent = "売上データを読み込み中…";
-  try { const snapshot = await getDocs(query(collection(db, "sync_events"), orderBy("clientCreatedAt", "desc"), limit(200))); events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })); source = "Firestore（直近200件）"; updateTerminalOptions(); render(); }
+  try { const snapshot = await getDocs(query(collection(db, "sync_events"), orderBy("clientCreatedAt", "desc"), limit(500))); events = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })); source = "Firestore（直近500件）"; updateTerminalOptions(); render(); }
   catch (error) { els.notice.textContent = `売上データを読み込めませんでした：${error.message}`; }
   finally { els.reload.disabled = false; }
 }
