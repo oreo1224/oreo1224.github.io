@@ -13,13 +13,37 @@
       <div class="account"><a class="button secondary" href="../journal/">電子ジャーナル</a><span id="account-name">ログインしていません</span><button id="login-button" class="button primary">Googleでログイン</button><button id="logout-button" class="button secondary" hidden>ログアウト</button></div>
     </header>
     <main id="analytics-app" hidden>
-      <section class="filters panel">
-        <label>端末<select id="terminal-filter"><option value="ALL">全端末</option></select></label>
-        <label>期間<select id="period-filter"><option value="ALL">読み込み済みすべて</option><option value="TODAY">今日</option><option value="7D">直近7日</option><option value="30D">直近30日</option></select></label>
+      <section class="filters panel" aria-label="売上集計条件">
+        <fieldset class="terminal-filter">
+          <legend>レジ端末</legend>
+          <div class="terminal-filter-heading">
+            <span id="terminal-selection-summary" class="terminal-selection-summary">読み込み中</span>
+            <div class="terminal-actions">
+              <button type="button" id="terminal-select-all" class="filter-link">すべて選択</button>
+              <button type="button" id="terminal-clear-all" class="filter-link">すべて解除</button>
+            </div>
+          </div>
+          <div id="terminal-options" class="terminal-options" role="group" aria-label="集計するレジ端末"></div>
+        </fieldset>
+        <div class="period-control">
+          <label for="period-filter">期間</label>
+          <select id="period-filter">
+            <option value="ALL">読み込み済みすべて</option>
+            <option value="TODAY">今日</option>
+            <option value="7D">直近7日</option>
+            <option value="30D">直近30日</option>
+            <option value="CUSTOM">日付を指定</option>
+          </select>
+          <div id="custom-date-range" class="custom-date-range" hidden>
+            <label for="start-date">開始日<input id="start-date" type="date" /></label>
+            <label for="end-date">終了日（含む）<input id="end-date" type="date" /></label>
+            <p id="date-range-error" class="filter-error" role="alert" hidden>開始日は終了日以前にしてください。</p>
+          </div>
+        </div>
         <label class="import-control">POS電子ジャーナルCSV<input id="csv-input" type="file" accept=".csv,text/csv" /></label>
         <button id="reload-button" class="button primary">Firestoreを再読込</button>
       </section>
-      <p class="import-help">端末の「電子ジャーナルをエクスポート」から出力したCSVを選ぶと、このブラウザ内だけで集計します。読み込み後はFirestoreへアクセスしません。</p>
+      <p class="import-help">日付とレジ端末の指定は読み込み済みデータに適用されます。Firestoreは直近最大500件が対象です。端末の「電子ジャーナルをエクスポート」から出力したCSVを選ぶと、このブラウザ内だけで集計します。読み込み後はFirestoreへアクセスしません。</p>
       <p id="notice" class="notice"></p>
       <section class="summary-grid">
         <article class="summary-card"><p>純売上</p><strong id="net-sales">¥0</strong><small>売上・修正後新伝・キャンセルを相殺</small></article>
