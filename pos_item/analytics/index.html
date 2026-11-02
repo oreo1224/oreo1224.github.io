@@ -41,10 +41,14 @@
           </div>
         </div>
         <label class="import-control">POS電子ジャーナルCSV<input id="csv-input" type="file" accept=".csv,text/csv" /></label>
-        <button id="reload-button" class="button primary">Firestoreを再読込</button>
+        <div class="filter-actions">
+          <button id="reload-button" type="button" class="button primary">Firestoreを再読込</button>
+          <button id="export-json-button" type="button" class="button secondary">期間内ジャーナルをJSON保存</button>
+        </div>
       </section>
-      <p class="import-help">日付とレジ端末の指定は読み込み済みデータに適用されます。Firestoreは直近最大500件が対象です。端末の「電子ジャーナルをエクスポート」から出力したCSVを選ぶと、このブラウザ内だけで集計します。読み込み後はFirestoreへアクセスしません。</p>
+      <p class="import-help">画面上の売上集計は読み込み済みの直近最大500件が対象です。JSON保存は、期間（今日・7日・30日・日付指定）と選択端末を指定して実行できます。Firestore使用時は対象期間のジャーナルを200件ずつ追加取得するため、500件を超えても出力できます。CSV使用時は読み込んだ内容から出力します。</p>
       <p id="notice" class="notice"></p>
+      <p id="export-status" class="export-status" role="status" aria-live="polite"></p>
       <section class="summary-grid">
         <article class="summary-card"><p>純売上</p><strong id="net-sales">¥0</strong><small>売上・修正後新伝・キャンセルを相殺</small></article>
         <article class="summary-card"><p>会計数</p><strong id="sale-count">0件</strong><small>売上／修正後新伝</small></article>
