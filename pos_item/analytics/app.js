@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { collection, getDocs, getFirestore, limit, orderBy, query, startAfter } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { collection, getDocs, getFirestore, limit, orderBy, query, startAfter, where } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { adminEmail, firebaseConfig } from "../firebase-config.js";
 
 const els = {
@@ -8,6 +8,7 @@ const els = {
   terminals: document.querySelector("#terminal-options"), terminalSummary: document.querySelector("#terminal-selection-summary"), terminalSelectAll: document.querySelector("#terminal-select-all"), terminalClearAll: document.querySelector("#terminal-clear-all"),
   period: document.querySelector("#period-filter"), dateRange: document.querySelector("#custom-date-range"), startDate: document.querySelector("#start-date"), endDate: document.querySelector("#end-date"), dateError: document.querySelector("#date-range-error"),
   csv: document.querySelector("#csv-input"), reload: document.querySelector("#reload-button"), notice: document.querySelector("#notice"),
+  exportJson: document.querySelector("#export-json-button"), exportStatus: document.querySelector("#export-status"),
   net: document.querySelector("#net-sales"), count: document.querySelector("#sale-count"), average: document.querySelector("#average-sale"), cancel: document.querySelector("#cancel-sales"),
   daily: document.querySelector("#daily-chart"), hourly: document.querySelector("#hourly-chart"), products: document.querySelector("#product-ranking"), payments: document.querySelector("#payment-breakdown")
 };
@@ -17,6 +18,7 @@ const yen = new Intl.NumberFormat("ja-JP", { style: "currency", currency: "JPY",
 const date = new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" });
 let events = [];
 let source = "Firestore";
+let sourceKind = "firestore";
 // null means all available terminals; an empty Set means no terminals selected.
 let selectedTerminals = null;
 
@@ -178,6 +180,7 @@ async function load() {
     }
     events = loaded;
     source = "Firestore（直近最大500件）";
+    sourceKind = "firestore";
     updateTerminalOptions();
     render();
   }
@@ -190,10 +193,118 @@ async function importCsv(file) {
   try {
     const imported = parsePosCsv(await file.text());
     if (!imported.length) throw new Error("CSV内に集計対象の伝票がありません。");
-    events = imported; source = `端末CSV（${file.name}）`; updateTerminalOptions(true); render();
+    events = imported; source = `端末CSV（${file.name}）`; sourceKind = "csv"; updateTerminalOptions(true); render();
   } catch (error) { els.notice.textContent = `CSVを読み込めませんでした：${error.message}`; }
   finally { els.csv.value = ""; }
 }
+
+
+function localDateString(value) {
+  const dateValue = new Date(value);
+  return [dateValue.getFullYear(), String(dateValue.getMonth() + 1).padStart(2, "0"), String(dateValue.getDate()).padStart(2, "0")].join("-");
+}
+function exportPeriodBounds() {
+  const preset = els.period.value;
+  const now = Date.now();
+  if (preset === "ALL") throw new Error("JSON保存には「今日」「直近7日」「直近30日」または「日付を指定」を選んでください。");
+  if (preset === "CUSTOM") {
+    if (!els.startDate.value || !els.endDate.value) throw new Error("開始日と終了日の両方を指定してください。");
+    if (els.startDate.value > els.endDate.value) throw new Error("開始日は終了日以前にしてください。");
+    return { preset, startMs: dateBoundary(els.startDate.value), endExclusiveMs: dateBoundary(els.endDate.value, true) };
+  }
+  if (preset === "TODAY") {
+    return { preset, startMs: new Date().setHours(0, 0, 0, 0), endExclusiveMs: dateBoundary(localDateString(now), true) };
+  }
+  if (preset === "7D" || preset === "30D") {
+    return { preset, startMs: now - (preset === "7D" ? 7 : 30) * 86_400_000, endExclusiveMs: now + 1 };
+  }
+  throw new Error("期間指定が不正です。");
+}
+async function exportJournalJson() {
+  if (els.exportJson.disabled) return;
+  els.exportStatus.textContent = "";
+  let bounds;
+  try {
+    bounds = exportPeriodBounds();
+    if (selectedTerminals !== null && selectedTerminals.size === 0) throw new Error("出力するレジ端末を1つ以上選択してください。");
+    if (auth.currentUser?.email?.toLocaleLowerCase() !== adminEmail.toLocaleLowerCase()) throw new Error("管理者アカウントでのログインが必要です。");
+  } catch (error) {
+    els.exportStatus.textContent = error.message;
+    return;
+  }
+
+  const terminals = selectedTerminals === null ? null : new Set(selectedTerminals);
+  const activeSource = sourceKind;
+  els.exportJson.disabled = true;
+  try {
+    const records = [];
+    if (activeSource === "csv") {
+      // CSV imports only include document-confirmation records.
+      records.push(...events.filter((event) => {
+        const time = timestamp(event);
+        return time >= bounds.startMs && time < bounds.endExclusiveMs
+          && (terminals === null || terminals.has(terminal(event)));
+      }));
+    } else {
+      // Firestore rules allow a maximum of 200 records per list request.
+      // Query by the stored event time, rather than limiting exports to the 500 loaded for charts.
+      let cursor = null;
+      let readCount = 0;
+      while (true) {
+        const constraints = [
+          where("clientCreatedAt", ">=", bounds.startMs),
+          where("clientCreatedAt", "<", bounds.endExclusiveMs),
+          orderBy("clientCreatedAt", "desc")
+        ];
+        if (cursor) constraints.push(startAfter(cursor));
+        constraints.push(limit(200));
+        const snapshot = await getDocs(query(collection(db, "sync_events"), ...constraints));
+        readCount += snapshot.size;
+        for (const doc of snapshot.docs) {
+          const event = { id: doc.id, ...doc.data() };
+          if (terminals === null || terminals.has(terminal(event))) records.push(event);
+        }
+        els.exportStatus.textContent = `Firestoreから${readCount}件読み込み中…（出力対象${records.length}件）`;
+        if (snapshot.size < 200) break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+      }
+    }
+
+    const data = {
+      format: "festival-pos-journal-v1",
+      exportedAt: new Date().toISOString(),
+      source: activeSource === "firestore" ? "Firestore sync_events" : "POS electronic journal CSV",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeField: activeSource === "firestore" ? "clientCreatedAt" : "payload.confirmed_at",
+      period: {
+        preset: bounds.preset,
+        startInclusive: new Date(bounds.startMs).toISOString(),
+        endExclusive: new Date(bounds.endExclusiveMs).toISOString()
+      },
+      terminalIds: terminals === null ? null : [...terminals].sort(),
+      count: records.length,
+      events: records
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const start = localDateString(bounds.startMs);
+    const end = localDateString(bounds.endExclusiveMs - 1);
+    anchor.download = `pos-journal-${start}_to_${end}.json`;
+    anchor.href = url;
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    els.exportStatus.textContent = `${records.length}件のJSONダウンロードを開始しました。`;
+  } catch (error) {
+    // Do not save a partial export if any Firestore page failed.
+    els.exportStatus.textContent = `JSON出力に失敗しました：${error.message}`;
+  } finally {
+    els.exportJson.disabled = false;
+  }
+}
+
 els.login.onclick = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { els.notice.textContent = `Googleログインに失敗しました：${error.message}`; } };
 els.logout.onclick = () => signOut(auth);
 els.terminals.onchange = (event) => {
@@ -210,5 +321,6 @@ els.period.onchange = () => { els.dateRange.hidden = els.period.value !== "CUSTO
 els.startDate.onchange = render;
 els.endDate.onchange = render;
 els.reload.onclick = load;
+els.exportJson.onclick = exportJournalJson;
 els.csv.onchange = () => importCsv(els.csv.files[0]);
 onAuthStateChanged(auth, (user) => { const admin = user?.email?.toLocaleLowerCase() === adminEmail.toLocaleLowerCase(); els.account.textContent = user?.email ?? "ログインしていません"; els.login.hidden = Boolean(user); els.logout.hidden = !user; els.app.hidden = !admin; els.loginMessage.hidden = admin; if (admin) load(); else if (user) els.notice.textContent = "このアカウントには閲覧権限がありません。"; });
