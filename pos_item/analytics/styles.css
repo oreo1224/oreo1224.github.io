@@ -25,3 +25,13 @@
 .filters > #reload-button { align-self: end; white-space: nowrap; }
 @media (max-width: 1050px) { .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .filters { display: grid; grid-template-columns: 1fr; } }
+
+/* Journal JSON export controls */
+.filter-actions { display: flex; flex-direction: column; gap: 8px; align-self: end; }
+.filter-actions .button { min-width: 180px; }
+.export-status { margin: 6px 4px 16px; min-height: 0; font-size: 14px; color: #475467; font-weight: 600; }
+.export-status:empty { display: none; }
+@media (max-width: 900px) {
+  .filter-actions { flex-direction: row; flex-wrap: wrap; align-self: stretch; }
+  .filter-actions .button { flex: 1 1 190px; }
+}
