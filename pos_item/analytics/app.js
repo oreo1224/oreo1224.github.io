@@ -8,7 +8,7 @@ const els = {
   terminals: document.querySelector("#terminal-options"), terminalSummary: document.querySelector("#terminal-selection-summary"), terminalSelectAll: document.querySelector("#terminal-select-all"), terminalClearAll: document.querySelector("#terminal-clear-all"),
   period: document.querySelector("#period-filter"), dateRange: document.querySelector("#custom-date-range"), startDate: document.querySelector("#start-date"), endDate: document.querySelector("#end-date"), dateError: document.querySelector("#date-range-error"),
   csv: document.querySelector("#csv-input"), reload: document.querySelector("#reload-button"), notice: document.querySelector("#notice"),
-  exportJson: document.querySelector("#export-json-button"), exportReport: document.querySelector("#export-report-button"), reportType: document.querySelector("#export-report-type"), exportStatus: document.querySelector("#export-status"),
+  exportJson: document.querySelector("#export-json-button"), exportReport: document.querySelector("#export-report-button"), exportExcel: document.querySelector("#export-excel-button"), reportType: document.querySelector("#export-report-type"), exportStatus: document.querySelector("#export-status"),
   net: document.querySelector("#net-sales"), count: document.querySelector("#sale-count"), average: document.querySelector("#average-sale"), cancel: document.querySelector("#cancel-sales"),
   daily: document.querySelector("#daily-chart"), hourly: document.querySelector("#hourly-chart"), products: document.querySelector("#product-ranking"), payments: document.querySelector("#payment-breakdown")
 };
@@ -369,8 +369,85 @@ function downloadCsv(rows, filename) {
   document.body.append(anchor); anchor.click(); anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
-async function exportReportCsv() {
-  if (els.exportReport.disabled) return;
+
+let excelJsPromise;
+function ensureExcelJs() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!excelJsPromise) {
+    excelJsPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
+      script.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error("Excelライブラリを読み込めませんでした。"));
+      script.onerror = () => reject(new Error("Excelライブラリの取得に失敗しました。ネットワーク接続を確認してください。"));
+      document.head.append(script);
+    }).catch((error) => { excelJsPromise = null; throw error; });
+  }
+  return excelJsPromise;
+}
+async function downloadWorkbook(records, filename, bounds, terminals) {
+  const ExcelJS = await ensureExcelJs();
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Festival POS Analytics";
+  workbook.created = new Date();
+  const formats = [
+    ["summary", "売上サマリー"],
+    ["payments", "決済方法別"],
+    ["hourly", "時間帯別"],
+    ["daily", "日別売上"],
+    ["products", "商品別売上"],
+    ["terminals", "端末別売上"]
+  ];
+  const overview = workbook.addWorksheet("出力条件");
+  const metadata = [
+    ["項目", "値"],
+    ["集計開始日", localDateString(bounds.startMs)],
+    ["集計終了日", localDateString(bounds.endExclusiveMs - 1)],
+    ["対象端末", terminals === null ? "すべて" : [...terminals].sort().join(", ")],
+    ["データソース", sourceKind === "firestore" ? "Firestore sync_events" : "POS電子ジャーナルCSV"],
+    ["対象イベント件数", records.length],
+    ["出力日時", new Date().toLocaleString("ja-JP")],
+    ["備考", "売上・修正後新伝・取消を相殺した純額で集計。決済件数は決済手段の記録件数で、複数決済は重複計上。"]
+  ];
+  const sheets = [[overview, metadata], ...formats.map(([key, name]) => [workbook.addWorksheet(name), reportCsvRows(records, key)])];
+  for (const [sheet, rows] of sheets) {
+    for (const row of rows) {
+      // Keep user-supplied strings as literal text rather than executable spreadsheet formulas.
+      sheet.addRow(row.map((value) => typeof value === "string" && /^[=+@\\t\\r]/.test(value) ? "'" + value : value));
+    }
+    const columns = rows[0]?.length ?? 1;
+    for (let i = 1; i <= columns; i++) {
+      const widest = rows.reduce((max, row) => Math.max(max, String(row[i - 1] ?? "").length), 0);
+      sheet.getColumn(i).width = Math.min(48, Math.max(14, widest + 3));
+    }
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
+    if (rows.length > 1) sheet.autoFilter = { from: { row: 1, column: 1 }, to: { row: rows.length, column: columns } };
+    const header = sheet.getRow(1);
+    header.height = 24;
+    header.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF14213D" } };
+      cell.alignment = { vertical: "middle" };
+    });
+    for (let rowIndex = 2; rowIndex <= rows.length; rowIndex++) {
+      const row = sheet.getRow(rowIndex);
+      if (rowIndex % 2 === 0) row.eachCell((cell) => {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5FA" } };
+      });
+      row.eachCell((cell) => {
+        if (typeof cell.value === "number") cell.numFmt = "#,##0;[Red]-#,##0";
+      });
+    }
+  }
+  const buffer = await workbook.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  const anchor = document.createElement("a");
+  anchor.href = url; anchor.download = filename;
+  document.body.append(anchor); anchor.click(); anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+async function exportAnalytics(format = "csv") {
+  if (els.exportReport.disabled || els.exportExcel.disabled) return;
   els.exportStatus.textContent = "";
   let bounds;
   try {
@@ -380,6 +457,7 @@ async function exportReportCsv() {
   } catch (error) { els.exportStatus.textContent = error.message; return; }
   const terminals = selectedTerminals === null ? null : new Set(selectedTerminals);
   els.exportReport.disabled = true;
+  els.exportExcel.disabled = true;
   els.exportJson.disabled = true;
   try {
     const records = [];
@@ -409,16 +487,22 @@ async function exportReportCsv() {
         cursor = snapshot.docs[snapshot.docs.length - 1];
       }
     }
-    const kind = els.reportType.value;
-    const rows = reportCsvRows(records, kind);
     const start = localDateString(bounds.startMs);
     const end = localDateString(bounds.endExclusiveMs - 1);
-    downloadCsv(rows, `pos-analytics-${kind}-${start}_to_${end}.csv`);
-    els.exportStatus.textContent = `${records.length}件を集計し、${kind}のCSVダウンロードを開始しました。`;
+    if (format === "xlsx") {
+      els.exportStatus.textContent = `${records.length}件のデータをExcelブックに変換中…`;
+      await downloadWorkbook(records, `pos-analytics-${start}_to_${end}.xlsx`, bounds, terminals);
+      els.exportStatus.textContent = `${records.length}件を集計し、全6項目のExcelブックを保存しました。`;
+    } else {
+      const kind = els.reportType.value;
+      const rows = reportCsvRows(records, kind);
+      downloadCsv(rows, `pos-analytics-${kind}-${start}_to_${end}.csv`);
+      els.exportStatus.textContent = `${records.length}件を集計し、${kind}のCSVダウンロードを開始しました。`;
+    }
   } catch (error) {
-    els.exportStatus.textContent = `集計CSV出力に失敗しました：${error.message}`;
+    els.exportStatus.textContent = `集計${format === "xlsx" ? "Excel" : "CSV"}出力に失敗しました：${error.message}`;
   } finally {
-    els.exportReport.disabled = false; els.exportJson.disabled = false;
+    els.exportReport.disabled = false; els.exportExcel.disabled = false; els.exportJson.disabled = false;
   }
 }
 
@@ -439,6 +523,7 @@ els.startDate.onchange = render;
 els.endDate.onchange = render;
 els.reload.onclick = load;
 els.exportJson.onclick = exportJournalJson;
-els.exportReport.onclick = exportReportCsv;
+els.exportReport.onclick = () => exportAnalytics("csv");
+els.exportExcel.onclick = () => exportAnalytics("xlsx");
 els.csv.onchange = () => importCsv(els.csv.files[0]);
 onAuthStateChanged(auth, (user) => { const admin = user?.email?.toLocaleLowerCase() === adminEmail.toLocaleLowerCase(); els.account.textContent = user?.email ?? "ログインしていません"; els.login.hidden = Boolean(user); els.logout.hidden = !user; els.app.hidden = !admin; els.loginMessage.hidden = admin; if (admin) load(); else if (user) els.notice.textContent = "このアカウントには閲覧権限がありません。"; });
