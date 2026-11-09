@@ -54,10 +54,11 @@
             </select>
           </label>
           <button id="export-report-button" type="button" class="button secondary">集計CSVを保存</button>
+          <button id="export-excel-button" type="button" class="button primary">全項目をExcelで保存</button>
           <button id="export-json-button" type="button" class="button secondary">期間内ジャーナルをJSON保存</button>
         </div>
       </section>
-      <p class="import-help">画面上の売上集計は読み込み済みの直近最大500件が対象です。集計CSV・JSON保存は、期間（今日・7日・30日・日付指定）と選択端末を指定して実行できます。Firestore使用時は対象期間のジャーナルを200件ずつ追加取得するため、500件を超えても出力できます。CSV使用時は読み込んだ内容から出力します。</p>
+      <p class="import-help">画面上の売上集計は読み込み済みの直近最大500件が対象です。集計CSV・Excel（6シート）・JSON保存は、期間（今日・7日・30日・日付指定）と選択端末を指定して実行できます。Firestore使用時は対象期間のジャーナルを200件ずつ追加取得するため、500件を超えても出力できます。CSV使用時は読み込んだ内容から出力します。</p>
       <p id="notice" class="notice"></p>
       <p id="export-status" class="export-status" role="status" aria-live="polite"></p>
       <section class="summary-grid">
