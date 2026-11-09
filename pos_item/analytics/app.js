@@ -502,8 +502,8 @@ async function exportAnalytics(format = "csv") {
       }
     }
     const recordTimes = records.map(timestamp).filter((time) => Number.isFinite(time) && time > 0);
-    const start = bounds.startMs === null ? (recordTimes.length ? localDateString(Math.min(...recordTimes)) : "all") : localDateString(bounds.startMs);
-    const end = bounds.endExclusiveMs === null ? (recordTimes.length ? localDateString(Math.max(...recordTimes)) : "all") : localDateString(bounds.endExclusiveMs - 1);
+    const start = bounds.startMs === null ? (recordTimes.length ? localDateString(recordTimes.reduce((min, time) => Math.min(min, time), Infinity)) : "all") : localDateString(bounds.startMs);
+    const end = bounds.endExclusiveMs === null ? (recordTimes.length ? localDateString(recordTimes.reduce((max, time) => Math.max(max, time), -Infinity)) : "all") : localDateString(bounds.endExclusiveMs - 1);
     if (format === "xlsx") {
       els.exportStatus.textContent = `${records.length}件のデータをExcelブックに変換中…`;
       await downloadWorkbook(records, `pos-analytics-${start}_to_${end}.xlsx`, bounds, terminals);
