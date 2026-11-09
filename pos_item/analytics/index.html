@@ -43,10 +43,21 @@
         <label class="import-control">POS電子ジャーナルCSV<input id="csv-input" type="file" accept=".csv,text/csv" /></label>
         <div class="filter-actions">
           <button id="reload-button" type="button" class="button primary">Firestoreを再読込</button>
+          <label for="export-report-type" class="export-report-label">集計CSV
+            <select id="export-report-type">
+              <option value="summary">売上サマリー</option>
+              <option value="payments">決済方法別</option>
+              <option value="hourly">時間帯別</option>
+              <option value="daily">日別売上</option>
+              <option value="products">商品別売上</option>
+              <option value="terminals">端末別売上</option>
+            </select>
+          </label>
+          <button id="export-report-button" type="button" class="button secondary">集計CSVを保存</button>
           <button id="export-json-button" type="button" class="button secondary">期間内ジャーナルをJSON保存</button>
         </div>
       </section>
-      <p class="import-help">画面上の売上集計は読み込み済みの直近最大500件が対象です。JSON保存は、期間（今日・7日・30日・日付指定）と選択端末を指定して実行できます。Firestore使用時は対象期間のジャーナルを200件ずつ追加取得するため、500件を超えても出力できます。CSV使用時は読み込んだ内容から出力します。</p>
+      <p class="import-help">画面上の売上集計は読み込み済みの直近最大500件が対象です。集計CSV・JSON保存は、期間（今日・7日・30日・日付指定）と選択端末を指定して実行できます。Firestore使用時は対象期間のジャーナルを200件ずつ追加取得するため、500件を超えても出力できます。CSV使用時は読み込んだ内容から出力します。</p>
       <p id="notice" class="notice"></p>
       <p id="export-status" class="export-status" role="status" aria-live="polite"></p>
       <section class="summary-grid">
