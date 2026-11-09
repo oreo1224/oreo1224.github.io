@@ -8,7 +8,7 @@ const els = {
   terminals: document.querySelector("#terminal-options"), terminalSummary: document.querySelector("#terminal-selection-summary"), terminalSelectAll: document.querySelector("#terminal-select-all"), terminalClearAll: document.querySelector("#terminal-clear-all"),
   period: document.querySelector("#period-filter"), dateRange: document.querySelector("#custom-date-range"), startDate: document.querySelector("#start-date"), endDate: document.querySelector("#end-date"), dateError: document.querySelector("#date-range-error"),
   csv: document.querySelector("#csv-input"), reload: document.querySelector("#reload-button"), notice: document.querySelector("#notice"),
-  exportJson: document.querySelector("#export-json-button"), exportStatus: document.querySelector("#export-status"),
+  exportJson: document.querySelector("#export-json-button"), exportReport: document.querySelector("#export-report-button"), reportType: document.querySelector("#export-report-type"), exportStatus: document.querySelector("#export-status"),
   net: document.querySelector("#net-sales"), count: document.querySelector("#sale-count"), average: document.querySelector("#average-sale"), cancel: document.querySelector("#cancel-sales"),
   daily: document.querySelector("#daily-chart"), hourly: document.querySelector("#hourly-chart"), products: document.querySelector("#product-ranking"), payments: document.querySelector("#payment-breakdown")
 };
@@ -305,6 +305,123 @@ async function exportJournalJson() {
   }
 }
 
+
+function reportCsvRows(records, kind) {
+  const buckets = new Map();
+  const bucket = (map, key) => {
+    if (!map.has(key)) map.set(key, { amount: 0, count: 0, quantity: 0 });
+    return map.get(key);
+  };
+  let net = 0, count = 0, cancelled = 0;
+  const daily = new Map(), hourly = new Map(), products = new Map(), payments = new Map(), terminals = new Map();
+  for (const event of records) {
+    const data = payload(event);
+    if (!sale(data)) continue;
+    const amount = number(data.total_yen);
+    const isSale = data.type !== "CANCEL";
+    net += amount;
+    if (isSale) count += 1; else cancelled += amount;
+    const dateValue = new Date(timestamp(event));
+    if (!Number.isFinite(dateValue.getTime())) continue;
+    const day = localDateString(dateValue.getTime()), hour = dateValue.getHours();
+    for (const [map, key] of [[daily, day], [hourly, hour], [terminals, terminal(event) || "未設定"]]) {
+      const item = bucket(map, key); item.amount += amount; if (isSale) item.count += 1;
+    }
+    for (const line of data.lines ?? []) {
+      const key = line.product_name ?? line.productName ?? "名称未設定";
+      const item = bucket(products, key);
+      const quantity = number(line.quantity);
+      item.quantity += quantity;
+      item.amount += line.line_total_yen == null ? number(line.unit_price_yen ?? line.price_yen) * quantity : number(line.line_total_yen);
+    }
+    for (const payment of data.payments ?? []) {
+      const item = bucket(payments, payment.type ?? "OTHER");
+      item.amount += number(payment.amount_yen);
+      if (isSale) item.count += 1;
+    }
+  }
+  const sorted = (map, compare) => [...map.entries()].sort(compare);
+  switch (kind) {
+    case "summary": return [["項目", "値"], ["純売上(円)", net], ["会計件数", count], ["平均会計額(円)", count ? Math.round(net / count) : 0], ["キャンセル額(円)", cancelled], ["集計対象イベント件数", records.length]];
+    case "daily": return [["日付", "純売上(円)", "会計件数", "平均会計額(円)"], ...sorted(daily, ([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, v.amount, v.count, v.count ? Math.round(v.amount / v.count) : 0])];
+    case "hourly": return [["時間帯", "純売上(円)", "会計件数", "平均会計額(円)"], ...Array.from({ length: 24 }, (_, h) => { const v = hourly.get(h) ?? { amount: 0, count: 0 }; return [String(h).padStart(2, "0") + ":00", v.amount, v.count, v.count ? Math.round(v.amount / v.count) : 0]; })];
+    case "products": return [["商品名", "販売数量(純数)", "純売上(円)", "売上構成比(%)"], ...sorted(products, ([, a], [, b]) => b.amount - a.amount).map(([key, v]) => [key, v.quantity, v.amount, net ? (v.amount / net * 100).toFixed(2) : "0.00"])];
+    case "payments": {
+      const paymentNet = [...payments.values()].reduce((sum, v) => sum + v.amount, 0);
+      const paymentCount = [...payments.values()].reduce((sum, v) => sum + v.count, 0);
+      return [["決済方法", "決済件数", "純決済額(円)", "件数比率(%)", "金額比率(%)"], ...sorted(payments, ([, a], [, b]) => b.amount - a.amount).map(([key, v]) => [label(key), v.count, v.amount, paymentCount ? (v.count / paymentCount * 100).toFixed(2) : "0.00", paymentNet ? (v.amount / paymentNet * 100).toFixed(2) : "0.00"])];
+    }
+    case "terminals": return [["端末ID", "純売上(円)", "会計件数", "平均会計額(円)"], ...sorted(terminals, ([a], [b]) => a.localeCompare(b)).map(([key, v]) => [key, v.amount, v.count, v.count ? Math.round(v.amount / v.count) : 0])];
+    default: throw new Error("出力項目が不正です。");
+  }
+}
+function downloadCsv(rows, filename) {
+  const escapeCell = (value) => {
+    const text = String(value ?? "");
+    // Quote cells so commas, newlines and spreadsheet formula-like text remain data.
+    const safe = /^[=+@\t\r]/.test(text) || /^-\D/.test(text) ? "'" + text : text;
+    return '"' + safe.replace(/"/g, '""') + '"';
+  };
+  const csv = "\uFEFF" + rows.map((row) => row.map(escapeCell).join(",")).join("\r\n") + "\r\n";
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const anchor = document.createElement("a");
+  anchor.href = url; anchor.download = filename;
+  document.body.append(anchor); anchor.click(); anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+async function exportReportCsv() {
+  if (els.exportReport.disabled) return;
+  els.exportStatus.textContent = "";
+  let bounds;
+  try {
+    bounds = exportPeriodBounds();
+    if (selectedTerminals !== null && selectedTerminals.size === 0) throw new Error("出力するレジ端末を1つ以上選択してください。");
+    if (auth.currentUser?.email?.toLocaleLowerCase() !== adminEmail.toLocaleLowerCase()) throw new Error("管理者アカウントでのログインが必要です。");
+  } catch (error) { els.exportStatus.textContent = error.message; return; }
+  const terminals = selectedTerminals === null ? null : new Set(selectedTerminals);
+  els.exportReport.disabled = true;
+  els.exportJson.disabled = true;
+  try {
+    const records = [];
+    if (sourceKind === "csv") {
+      records.push(...events.filter((event) => {
+        const time = timestamp(event);
+        return time >= bounds.startMs && time < bounds.endExclusiveMs && (terminals === null || terminals.has(terminal(event)));
+      }));
+    } else {
+      let cursor = null, scanned = 0;
+      while (true) {
+        const constraints = [
+          where("clientCreatedAt", ">=", bounds.startMs),
+          where("clientCreatedAt", "<", bounds.endExclusiveMs),
+          orderBy("clientCreatedAt", "desc")
+        ];
+        if (cursor) constraints.push(startAfter(cursor));
+        constraints.push(limit(200));
+        const snapshot = await getDocs(query(collection(db, "sync_events"), ...constraints));
+        scanned += snapshot.size;
+        for (const doc of snapshot.docs) {
+          const event = { id: doc.id, ...doc.data() };
+          if (terminals === null || terminals.has(terminal(event))) records.push(event);
+        }
+        els.exportStatus.textContent = `Firestoreから${scanned}件取得中…（対象${records.length}件）`;
+        if (snapshot.size < 200) break;
+        cursor = snapshot.docs[snapshot.docs.length - 1];
+      }
+    }
+    const kind = els.reportType.value;
+    const rows = reportCsvRows(records, kind);
+    const start = localDateString(bounds.startMs);
+    const end = localDateString(bounds.endExclusiveMs - 1);
+    downloadCsv(rows, `pos-analytics-${kind}-${start}_to_${end}.csv`);
+    els.exportStatus.textContent = `${records.length}件を集計し、${kind}のCSVダウンロードを開始しました。`;
+  } catch (error) {
+    els.exportStatus.textContent = `集計CSV出力に失敗しました：${error.message}`;
+  } finally {
+    els.exportReport.disabled = false; els.exportJson.disabled = false;
+  }
+}
+
 els.login.onclick = async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (error) { els.notice.textContent = `Googleログインに失敗しました：${error.message}`; } };
 els.logout.onclick = () => signOut(auth);
 els.terminals.onchange = (event) => {
@@ -322,5 +439,6 @@ els.startDate.onchange = render;
 els.endDate.onchange = render;
 els.reload.onclick = load;
 els.exportJson.onclick = exportJournalJson;
+els.exportReport.onclick = exportReportCsv;
 els.csv.onchange = () => importCsv(els.csv.files[0]);
 onAuthStateChanged(auth, (user) => { const admin = user?.email?.toLocaleLowerCase() === adminEmail.toLocaleLowerCase(); els.account.textContent = user?.email ?? "ログインしていません"; els.login.hidden = Boolean(user); els.logout.hidden = !user; els.app.hidden = !admin; els.loginMessage.hidden = admin; if (admin) load(); else if (user) els.notice.textContent = "このアカウントには閲覧権限がありません。"; });
