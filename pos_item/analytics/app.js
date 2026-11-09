@@ -376,10 +376,22 @@ function ensureExcelJs() {
   if (!excelJsPromise) {
     excelJsPromise = new Promise((resolve, reject) => {
       const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js";
-      script.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : reject(new Error("Excelライブラリを読み込めませんでした。"));
-      script.onerror = () => reject(new Error("Excelライブラリの取得に失敗しました。ネットワーク接続を確認してください。"));
-      document.head.append(script);
+      const urls = [
+        "https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js",
+        "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"
+      ];
+      const load = (index) => {
+        if (index >= urls.length) {
+          reject(new Error("Excelライブラリの取得に失敗しました。ネットワーク接続を確認してください。"));
+          return;
+        }
+        const fallbackScript = document.createElement("script");
+        fallbackScript.src = urls[index];
+        fallbackScript.onload = () => window.ExcelJS ? resolve(window.ExcelJS) : load(index + 1);
+        fallbackScript.onerror = () => load(index + 1);
+        document.head.append(fallbackScript);
+      };
+      load(0);
     }).catch((error) => { excelJsPromise = null; throw error; });
   }
   return excelJsPromise;
@@ -400,8 +412,8 @@ async function downloadWorkbook(records, filename, bounds, terminals) {
   const overview = workbook.addWorksheet("出力条件");
   const metadata = [
     ["項目", "値"],
-    ["集計開始日", localDateString(bounds.startMs)],
-    ["集計終了日", localDateString(bounds.endExclusiveMs - 1)],
+    ["集計開始日", bounds.startMs === null ? "全期間" : localDateString(bounds.startMs)],
+    ["集計終了日", bounds.endExclusiveMs === null ? "全期間" : localDateString(bounds.endExclusiveMs - 1)],
     ["対象端末", terminals === null ? "すべて" : [...terminals].sort().join(", ")],
     ["データソース", sourceKind === "firestore" ? "Firestore sync_events" : "POS電子ジャーナルCSV"],
     ["対象イベント件数", records.length],
@@ -451,7 +463,7 @@ async function exportAnalytics(format = "csv") {
   els.exportStatus.textContent = "";
   let bounds;
   try {
-    bounds = exportPeriodBounds();
+    bounds = els.period.value === "ALL" ? { preset: "ALL", startMs: null, endExclusiveMs: null } : exportPeriodBounds();
     if (selectedTerminals !== null && selectedTerminals.size === 0) throw new Error("出力するレジ端末を1つ以上選択してください。");
     if (auth.currentUser?.email?.toLocaleLowerCase() !== adminEmail.toLocaleLowerCase()) throw new Error("管理者アカウントでのログインが必要です。");
   } catch (error) { els.exportStatus.textContent = error.message; return; }
@@ -464,16 +476,18 @@ async function exportAnalytics(format = "csv") {
     if (sourceKind === "csv") {
       records.push(...events.filter((event) => {
         const time = timestamp(event);
-        return time >= bounds.startMs && time < bounds.endExclusiveMs && (terminals === null || terminals.has(terminal(event)));
+        return (bounds.startMs === null || time >= bounds.startMs) && (bounds.endExclusiveMs === null || time < bounds.endExclusiveMs) && (terminals === null || terminals.has(terminal(event)));
       }));
     } else {
       let cursor = null, scanned = 0;
       while (true) {
-        const constraints = [
-          where("clientCreatedAt", ">=", bounds.startMs),
-          where("clientCreatedAt", "<", bounds.endExclusiveMs),
-          orderBy("clientCreatedAt", "desc")
-        ];
+        const constraints = bounds.preset === "ALL"
+          ? [orderBy("clientCreatedAt", "desc")]
+          : [
+              where("clientCreatedAt", ">=", bounds.startMs),
+              where("clientCreatedAt", "<", bounds.endExclusiveMs),
+              orderBy("clientCreatedAt", "desc")
+            ];
         if (cursor) constraints.push(startAfter(cursor));
         constraints.push(limit(200));
         const snapshot = await getDocs(query(collection(db, "sync_events"), ...constraints));
@@ -487,8 +501,9 @@ async function exportAnalytics(format = "csv") {
         cursor = snapshot.docs[snapshot.docs.length - 1];
       }
     }
-    const start = localDateString(bounds.startMs);
-    const end = localDateString(bounds.endExclusiveMs - 1);
+    const recordTimes = records.map(timestamp).filter((time) => Number.isFinite(time) && time > 0);
+    const start = bounds.startMs === null ? (recordTimes.length ? localDateString(Math.min(...recordTimes)) : "all") : localDateString(bounds.startMs);
+    const end = bounds.endExclusiveMs === null ? (recordTimes.length ? localDateString(Math.max(...recordTimes)) : "all") : localDateString(bounds.endExclusiveMs - 1);
     if (format === "xlsx") {
       els.exportStatus.textContent = `${records.length}件のデータをExcelブックに変換中…`;
       await downloadWorkbook(records, `pos-analytics-${start}_to_${end}.xlsx`, bounds, terminals);
